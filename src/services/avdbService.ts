@@ -1,6 +1,6 @@
 import { MovieListResponse, MovieDetailResponse, Movie, MovieDetail } from '../types';
 
-const API_BASE = '/api/avdb';
+const API_BASE = 'https://avdbapi.com/api.php';
 
 const mapAVDBMovie = (item: any): Movie => {
   const id = item.id || item.vod_id || item.movie_code || Math.random().toString(36).substring(7);
