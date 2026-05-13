@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="google-site-verification" content="F06Vd6lFniUXmJXH80UUhTa09r0DBaHqgM4JuQTCX6U" />
+    <meta name="msvalidate.01" content="3272BDE866C77FFFE8499EB05F224A6B" />
+    <meta name="description" content="Xem phim online miễn phí chất lượng cao nhanh nhất. Thưởng thức hàng ngàn bộ phim vietsub, thuyết minh mới nhất.">
+    <meta property="og:title" content="PhimHay - Xem phim online chất lượng cao">
+    <meta property="og:description" content="Khám phá ngay trải nghiệm xem phim tuyệt đỉnh với hàng ngàn bộ phim bom tấn, hành động, tình cảm đa dạng.">
+    <link rel="icon" href="/logo.ico" type="image/x-icon" />
+    <title>PhimHay - Xem phim online miễn phí chất lượng cao</title>
+    <script>
+      window.__onGCastApiAvailable = function(isAvailable) {
+        if (isAvailable && window.cast && window.chrome) {
+          try {
+            cast.framework.CastContext.getInstance().setOptions({
+              receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+              autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
+          } catch (e) {
+            console.error("Cast initialize error", e);
+          }
+        }
+      };
+    </script>
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
