@@ -73,12 +73,3 @@ export interface MovieDetailResponse {
   status: string;
   movie: MovieDetail;
 }
-
-export interface UserSettings {
-  theme: 'dark' | 'light' | 'system';
-  language: 'vi' | 'en';
-  autoPlay: boolean;
-  pauseHistory: boolean;
-  dataSaver: boolean;
-  notifications: boolean;
-}

@@ -1,19 +1,9 @@
-import { Movie, UserSettings } from '../types';
+import { Movie } from '../types';
 
 const AGE_STATUS_KEY = 'phimtop1_age_status';
 const WATCHLIST_KEY = 'phimhay_watchlist';
 const HISTORY_KEY = 'phimhay_history';
 const COMMENTS_KEY = 'phimhay_comments';
-const SETTINGS_KEY = 'phimhay_settings';
-
-const DEFAULT_SETTINGS: UserSettings = {
-  theme: 'dark',
-  language: 'vi',
-  autoPlay: true,
-  pauseHistory: false,
-  dataSaver: false,
-  notifications: true
-};
 
 export interface Comment {
   id: string;
@@ -60,7 +50,6 @@ export const storage = {
     return data ? JSON.parse(data) : [];
   },
   addToHistory: (movie: Movie) => {
-    if (storage.getSettings().pauseHistory) return;
     const list = storage.getHistory().filter((m) => m.slug !== movie.slug);
     localStorage.setItem(HISTORY_KEY, JSON.stringify([movie, ...list].slice(0, 50)));
   },
@@ -105,27 +94,5 @@ export const storage = {
       }
       localStorage.setItem(COMMENTS_KEY, JSON.stringify(list));
     }
-  },
-
-  // Settings
-  getSettings: (): UserSettings => {
-    const data = localStorage.getItem(SETTINGS_KEY);
-    return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
-  },
-  updateSettings: (newSettings: Partial<UserSettings>) => {
-    const current = storage.getSettings();
-    const updated = { ...current, ...newSettings };
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
-    
-    // Apply theme immediately
-    if (newSettings.theme) {
-      if (updated.theme === 'dark' || (updated.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-    
-    return updated;
   }
 };
