@@ -1,8 +1,25 @@
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 export function Layout() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const isAdultPage = location.pathname.startsWith('/nguoi-lon') || location.pathname.startsWith('/dien-vien-18');
+    const faviconUrl = isAdultPage ? '/favicon-adult.svg' : '/favicon.svg';
+    
+    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.type = 'image/svg+xml';
+    link.href = faviconUrl;
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-rose-500/30 flex flex-col">
       <Navbar />
