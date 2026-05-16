@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Watch Party Room",
+      "description": "A room for synchronized movie watching",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "movieSlug": { "type": "string" },
+        "movieName": { "type": "string" },
+        "activeEpisodeSlug": { "type": "string" },
+        "activeEpisodeName": { "type": "string" },
+        "playbackState": { "type": "string", "enum": ["playing", "paused"] },
+        "currentTime": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" },
+        "hostId": { "type": "string" },
+        "users": { "type": "object" }
+      },
+      "required": ["name", "movieSlug", "hostId"]
+    },
+    "Chat": {
+      "title": "Chat Message",
+      "description": "A message sent in a watch party room",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "text", "timestamp"]
+    }
+  },
+  "firestore": {
+    "rooms": {
+      "schema": "Room",
+      "description": "Top-level collection for watch party rooms"
+    },
+    "rooms/{roomId}/chat": {
+      "schema": "Chat",
+      "description": "Sub-collection for messages in a room"
+    }
+  }
+}

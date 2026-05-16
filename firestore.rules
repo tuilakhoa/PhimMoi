@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Room Validation
+    function isValidRoom(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.movieSlug is string && data.movieSlug.size() > 0 &&
+             data.hostId is string && data.hostId == request.auth.uid &&
+             (data.get('playbackState', 'paused') in ['playing', 'paused']) &&
+             (data.get('currentTime', 0) is number && data.get('currentTime', 0) >= 0);
+    }
+
+    match /rooms/{roomId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Allow listing rooms for manual joining if needed
+      
+      allow create: if isSignedIn() && isValidId(roomId) && isValidRoom(incoming());
+      
+      allow update: if isSignedIn() && (
+        // Host can update anything valid
+        (existing().hostId == request.auth.uid && isValidRoom(incoming())) ||
+        // Members can update sync state (playbackState, currentTime, lastUpdated) and their own entry in users
+        (
+          incoming().hostId == existing().hostId &&
+          incoming().movieSlug == existing().movieSlug &&
+          incoming().diff(existing()).affectedKeys().hasAny(['playbackState', 'currentTime', 'lastUpdated', 'users', 'activeEpisodeSlug', 'activeEpisodeName'])
+        )
+      );
+      
+      allow delete: if isSignedIn() && existing().hostId == request.auth.uid;
+      
+      // Chat messages
+      match /chat/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && 
+                      incoming().userId == request.auth.uid &&
+                      incoming().text is string && incoming().text.size() > 0 && incoming().text.size() <= 1000;
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { nguoncApi } from '../services/api';
 import { topxxApi } from '../services/topxxService';
 import { vsphimApi, xxvnApi } from '../services/adultService';
@@ -14,12 +14,47 @@ import { MovieCard } from '../components/MovieCard';
 import { WatchlistButton } from '../components/WatchlistButton';
 import { Comments } from '../components/Comments';
 import { storage } from '../lib/storage';
+import { roomService } from '../services/roomService';
+import { auth, signInWithGoogle } from '../lib/firebase';
+import { Users } from 'lucide-react';
 
 export function MovieDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeEpisode, setActiveEpisode] = useState<EpisodeItem | null>(null);
+  const [creatingRoom, setCreatingRoom] = useState(false);
+
+  const handleCreateWatchParty = async () => {
+    if (!movie || !activeEpisode) return;
+
+    if (!auth.currentUser) {
+      if (confirm("Bạn cần đăng nhập để tạo phòng xem chung. Đăng nhập ngay?")) {
+        await signInWithGoogle().catch(console.error);
+      }
+      return;
+    }
+
+    setCreatingRoom(true);
+    try {
+      const roomName = `${auth.currentUser.displayName || "Bạn"}'s Party - ${movie.name}`;
+      const roomId = await roomService.createRoom(
+        roomName, 
+        movie.slug, 
+        movie.name, 
+        activeEpisode.slug, 
+        activeEpisode.name
+      );
+      navigate(`/watch/${roomId}`);
+    } catch (e) {
+      console.error("Failed to create room", e);
+      alert("Không thể tạo phòng xem chung. Vui lòng thử lại!");
+    } finally {
+      setCreatingRoom(false);
+    }
+  };
+
   const [episodeSearch, setEpisodeSearch] = useState('');
   const [isReversed, setIsReversed] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -219,27 +254,37 @@ export function MovieDetailPage() {
                  <span className="w-1.5 h-6 bg-rose-500 rounded-full inline-block"></span>
                  Tập {activeEpisode.name}
                </h2>
-               <button 
-                  onClick={() => setIsFocusMode(!isFocusMode)}
-                  className={cn(
-                    "group flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
-                    isFocusMode 
-                      ? "bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 border border-rose-500/30" 
-                      : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-rose-400 border border-zinc-800 hover:border-zinc-700 shadow-sm"
-                  )}
-               >
-                  {isFocusMode ? (
-                    <>
-                      <Lightbulb className="w-4 h-4 text-rose-400 fill-rose-400/20" />
-                      <span>Tắt chế độ tập trung</span>
-                    </>
-                  ) : (
-                    <>
-                      <LightbulbOff className="w-4 h-4 group-hover:text-rose-400 transition-colors" />
-                      <span>Chế độ tập trung</span>
-                    </>
-                  )}
-               </button>
+               <div className="flex items-center gap-2">
+                 <button 
+                    onClick={handleCreateWatchParty}
+                    disabled={creatingRoom}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-rose-600 text-white hover:bg-rose-500 transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50"
+                 >
+                    {creatingRoom ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                    <span>Xem chung</span>
+                 </button>
+                 <button 
+                    onClick={() => setIsFocusMode(!isFocusMode)}
+                    className={cn(
+                      "group flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                      isFocusMode 
+                        ? "bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 border border-rose-500/30" 
+                        : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-rose-400 border border-zinc-800 hover:border-zinc-700 shadow-sm"
+                    )}
+                 >
+                    {isFocusMode ? (
+                      <>
+                        <Lightbulb className="w-4 h-4 text-rose-400 fill-rose-400/20" />
+                        <span>Tắt chế độ tập trung</span>
+                      </>
+                    ) : (
+                      <>
+                        <LightbulbOff className="w-4 h-4 group-hover:text-rose-400 transition-colors" />
+                        <span>Chế độ tập trung</span>
+                      </>
+                    )}
+                 </button>
+               </div>
             </div>
             
             <div className={cn("w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-zinc-800 transition-all duration-300", isFocusMode ? "aspect-video max-h-[85vh]" : "aspect-video")}>

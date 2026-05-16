@@ -1,3 +1,4 @@
+import React from 'react';
 import { ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAge } from '../contexts/AgeContext';

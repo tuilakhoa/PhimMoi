@@ -13,6 +13,7 @@ import { ActorsPage } from './pages/Actors';
 
 import { CosplayPage } from './pages/CosplayPage';
 import { CosplayDetail } from './pages/CosplayDetail';
+import { WatchRoom } from './pages/WatchRoom';
 import APIDocs from './pages/APIDocs';
 import { AgeProvider } from './contexts/AgeContext';
 import { AgeGate } from './components/AgeGate';
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="nguoi-lon/cosplay" element={<CosplayPage />} />
             <Route path="nguoi-lon/cosplay/:id" element={<CosplayDetail />} />
             <Route path="film/:slug" element={<MovieDetailPage />} />
+            <Route path="watch/:roomId" element={<WatchRoom />} />
             <Route path="api-docs" element={<APIDocs />} />
           </Route>
         </Routes>

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Menu, X, MonitorPlay, Heart, History, Sparkles, Film, Tv, PlayCircle, Flame, Lock, User, Camera } from 'lucide-react';
+import { Search, Menu, X, MonitorPlay, Heart, History, Sparkles, Film, Tv, PlayCircle, Flame, Lock, User, Camera, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAge } from '../../contexts/AgeContext';
+import { auth, signInWithGoogle } from '../../lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 
 const ALL_LINKS = [
   { name: 'Phim Mới', slug: '/', icon: PlayCircle },
@@ -21,7 +23,13 @@ export function Navbar() {
   const location = useLocation();
   const { ageStatus } = useAge();
 
-  const VISIBLE_LINKS = ageStatus === 'under18' ? ALL_LINKS.filter(l => !l.isAdult) : ALL_LINKS;
+   const VISIBLE_LINKS = ageStatus === 'under18' ? ALL_LINKS.filter(l => !l.isAdult) : ALL_LINKS;
+   const [user, setUser] = useState<FirebaseUser | null>(null);
+
+   useEffect(() => {
+     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
+     return () => unsubscribe();
+   }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -136,6 +144,37 @@ export function Navbar() {
                 >
                   <History className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Link>
+                
+                {user ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => signOut(auth)}
+                      className="p-2.5 rounded-full bg-zinc-900/50 text-zinc-400 hover:text-rose-500 hover:bg-zinc-800/50 transition-all"
+                      title="Đăng xuất"
+                    >
+                      <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                      {user.photoURL ? (
+                        <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                      ) : (
+                        user.displayName?.charAt(0) || 'U'
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={signInWithGoogle}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border",
+                      isAdultPage ? "bg-rose-600 border-rose-500 text-white" : "bg-indigo-600 border-indigo-500 text-white"
+                    )}
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">Đăng nhập</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   className="lg:hidden p-2.5 rounded-full bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all"
