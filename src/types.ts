@@ -78,5 +78,7 @@ export interface UserSettings {
   theme: 'dark' | 'light' | 'system';
   language: 'vi' | 'en';
   autoPlay: boolean;
-  quality: 'auto' | '1080p' | '720p' | '360p';
+  pauseHistory: boolean;
+  dataSaver: boolean;
+  notifications: boolean;
 }

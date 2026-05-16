@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../lib/firebase';
 import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
-import { User as UserIcon, Mail, Camera, Loader2, Save, Settings, Moon, Sun, Monitor, Globe, PlayCircle, Shield } from 'lucide-react';
+import { User as UserIcon, Mail, Camera, Loader2, Save, Settings, Moon, Sun, Monitor, Globe, PlayCircle, Shield, Wifi, Bell, EyeOff } from 'lucide-react';
 import { storage } from '../lib/storage';
 import { UserSettings } from '../types';
 
@@ -272,20 +272,51 @@ export function ProfilePage() {
 
                     <div className="flex items-center justify-between p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl">
                       <div>
-                        <div className="text-white font-medium">Chất lượng mặc định</div>
-                        <div className="text-xs text-zinc-500 mt-0.5">Ưu tiên chất lượng hình ảnh khi xem</div>
+                        <div className="flex items-center gap-2 text-white font-medium">
+                           <Wifi className="w-4 h-4 text-zinc-400" />
+                           Tiết kiệm dữ liệu
+                        </div>
+                        <div className="text-xs text-zinc-500 mt-0.5">Giảm chất lượng video để tiết kiệm băng thông</div>
                       </div>
-                      <select
-                        value={settings.quality}
-                        onChange={(e) => handleUpdateSettings({ quality: e.target.value as any })}
-                        className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-3 py-1 focus:outline-none"
+                      <button
+                        onClick={() => handleUpdateSettings({ dataSaver: !settings.dataSaver })}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${
+                          settings.dataSaver ? 'bg-rose-500' : 'bg-zinc-800'
+                        }`}
                       >
-                        <option value="auto">Tự động</option>
-                        <option value="1080p">1080p (FHD)</option>
-                        <option value="720p">720p (HD)</option>
-                        <option value="360p">360p (SD)</option>
-                      </select>
+                        <div
+                          className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                            settings.dataSaver ? 'translate-x-6' : ''
+                          }`}
+                        />
+                      </button>
                     </div>
+                  </div>
+                </section>
+
+                {/* Thông báo */}
+                <section className="space-y-4 pt-4 border-t border-zinc-800">
+                  <div className="flex items-center gap-2 text-zinc-100 font-semibold mb-4">
+                    <Bell className="w-5 h-5 text-indigo-500" />
+                    Thông báo
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl">
+                    <div>
+                      <div className="text-white font-medium">Nhận thông báo</div>
+                      <div className="text-xs text-zinc-500 mt-0.5">Thông báo tập mới, phim hot, và cập nhật</div>
+                    </div>
+                    <button
+                      onClick={() => handleUpdateSettings({ notifications: !settings.notifications })}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${
+                        settings.notifications ? 'bg-rose-500' : 'bg-zinc-800'
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                          settings.notifications ? 'translate-x-6' : ''
+                        }`}
+                      />
+                    </button>
                   </div>
                 </section>
 
@@ -295,10 +326,27 @@ export function ProfilePage() {
                     <Shield className="w-5 h-5 text-rose-500" />
                     Bảo mật & Quyền riêng tư
                   </div>
-                  <button className="w-full text-left p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl hover:bg-zinc-900 transition-colors">
-                    <div className="text-white font-medium">Thay đổi mật khẩu</div>
-                    <div className="text-xs text-zinc-500 mt-0.5">Yêu cầu liên kết qua email để xác thực</div>
-                  </button>
+                  <div className="flex items-center justify-between p-4 bg-zinc-950/50 border border-zinc-800 rounded-2xl">
+                    <div>
+                      <div className="flex items-center gap-2 text-white font-medium">
+                        <EyeOff className="w-4 h-4 text-zinc-400" />
+                        Tạm dừng lịch sử xem
+                      </div>
+                      <div className="text-xs text-zinc-500 mt-0.5">Không lưu các phim bạn xem từ bây giờ</div>
+                    </div>
+                    <button
+                      onClick={() => handleUpdateSettings({ pauseHistory: !settings.pauseHistory })}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${
+                        settings.pauseHistory ? 'bg-rose-500' : 'bg-zinc-800'
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                          settings.pauseHistory ? 'translate-x-6' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
                   <button className="w-full text-left p-4 border border-rose-500/20 bg-rose-500/5 rounded-2xl hover:bg-rose-500/10 transition-colors">
                     <div className="text-rose-500 font-medium whitespace-nowrap">Xóa tài khoản</div>
                     <div className="text-xs text-rose-400 mt-0.5">Xóa vĩnh viễn tất cả thông tin và lịch sử xem của bạn</div>

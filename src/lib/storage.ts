@@ -10,7 +10,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   theme: 'dark',
   language: 'vi',
   autoPlay: true,
-  quality: 'auto'
+  pauseHistory: false,
+  dataSaver: false,
+  notifications: true
 };
 
 export interface Comment {
@@ -58,6 +60,7 @@ export const storage = {
     return data ? JSON.parse(data) : [];
   },
   addToHistory: (movie: Movie) => {
+    if (storage.getSettings().pauseHistory) return;
     const list = storage.getHistory().filter((m) => m.slug !== movie.slug);
     localStorage.setItem(HISTORY_KEY, JSON.stringify([movie, ...list].slice(0, 50)));
   },
