@@ -82,25 +82,66 @@ export function Navbar() {
             </Link>
             
             {/* Desktop Nav Items */}
-            <div className="hidden lg:flex items-center gap-1">
-              {VISIBLE_LINKS.map((link) => {
-                const active = isActive(link.slug);
-                return (
-                  <Link
-                    key={link.slug}
-                    to={link.slug}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-transparent",
-                      active
-                        ? (link.isAdult ? "bg-rose-600 text-white shadow-lg shadow-rose-600/20" : "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20")
-                        : "text-zinc-400 hover:text-white hover:bg-zinc-900/50"
-                    )}
-                  >
-                    <link.icon className={cn("w-4 h-4", active ? "text-white" : (link.isAdult ? "text-rose-500" : "text-indigo-500"))} />
-                    {link.name}
+            <div className="hidden lg:flex items-center gap-2">
+              <Link
+                to="/"
+                className={cn(
+                  "px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-transparent",
+                  isActive('/') 
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-900/50"
+                )}
+              >
+                <PlayCircle className={cn("w-4 h-4", isActive('/') ? "text-white" : "text-indigo-500")} />
+                Phim Mới
+              </Link>
+
+              {/* Danh sách phim Dropdown */}
+              <div className="relative group">
+                <button className="px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-900/50">
+                  <Film className="w-4 h-4 text-indigo-500" />
+                  Danh mục
+                </button>
+                <div className="absolute left-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left flex flex-col p-2">
+                  <Link to="/danh-sach/tv-shows" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
+                    <MonitorPlay className="w-4 h-4 text-indigo-500" />
+                    TV Shows
                   </Link>
-                );
-              })}
+                  <Link to="/danh-sach/phim-bo" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
+                    <Tv className="w-4 h-4 text-indigo-500" />
+                    Phim Bộ
+                  </Link>
+                  <Link to="/danh-sach/phim-le" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
+                    <Film className="w-4 h-4 text-indigo-500" />
+                    Phim Lẻ
+                  </Link>
+                </div>
+              </div>
+
+              {/* 18+ Dropdown */}
+              {(ageStatus !== 'under18') && (
+                <div className="relative group">
+                  <button className={cn(
+                    "px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-transparent",
+                    isAdultPage 
+                      ? "bg-rose-600 text-white shadow-lg shadow-rose-600/20"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-900/50"
+                  )}>
+                    <Flame className={cn("w-4 h-4", isAdultPage ? "text-white" : "text-rose-500")} />
+                    Nội dung 18+
+                  </button>
+                  <div className="absolute left-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left flex flex-col p-2">
+                    <Link to="/nguoi-lon" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
+                      <Flame className="w-4 h-4 text-rose-500" />
+                      Phim 18+
+                    </Link>
+                    <Link to="/nguoi-lon/cosplay" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
+                      <Camera className="w-4 h-4 text-rose-500" />
+                      Cosplay
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Side: Search & Profile Items */}
@@ -146,20 +187,45 @@ export function Navbar() {
                 </Link>
                 
                 {user ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => signOut(auth)}
-                      className="p-2.5 rounded-full bg-zinc-900/50 text-zinc-400 hover:text-rose-500 hover:bg-zinc-800/50 transition-all"
-                      title="Đăng xuất"
-                    >
-                      <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 focus:outline-none">
+                      <div className="w-9 h-9 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden transition-transform group-hover:scale-105">
+                        {user.photoURL ? (
+                          <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                        ) : (
+                          user.displayName?.charAt(0) || 'U'
+                        )}
+                      </div>
                     </button>
-                    <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
-                      {user.photoURL ? (
-                        <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
-                      ) : (
-                        user.displayName?.charAt(0) || 'U'
-                      )}
+                    {/* Dropdown Menu */}
+                    <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right">
+                      <div className="p-3 border-b border-zinc-800">
+                        <p className="text-sm font-medium text-white truncate">{user.displayName || 'Người dùng'}</p>
+                        <p className="text-xs text-zinc-400 truncate">{user.email}</p>
+                      </div>
+                      <div className="p-2 space-y-1">
+                        <Link to="/ho-so" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
+                          <User className="w-4 h-4" />
+                          Hồ sơ
+                        </Link>
+                        <Link to="/yeu-thich" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
+                          <Heart className="w-4 h-4" />
+                          Phim yêu thích
+                        </Link>
+                        <Link to="/lich-su" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
+                          <History className="w-4 h-4" />
+                          Lịch sử xem
+                        </Link>
+                      </div>
+                      <div className="p-2 border-t border-zinc-800">
+                        <button
+                          onClick={() => signOut(auth)}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-rose-500 hover:bg-rose-500/10 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Đăng xuất
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (

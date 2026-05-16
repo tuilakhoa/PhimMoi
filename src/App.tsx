@@ -14,6 +14,7 @@ import { ActorsPage } from './pages/Actors';
 import { CosplayPage } from './pages/CosplayPage';
 import { CosplayDetail } from './pages/CosplayDetail';
 import { WatchRoom } from './pages/WatchRoom';
+import { ProfilePage } from './pages/ProfilePage';
 import APIDocs from './pages/APIDocs';
 import { AgeProvider } from './contexts/AgeContext';
 import { AgeGate } from './components/AgeGate';
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="quoc-gia/:slug" element={<Category />} />
             <Route path="nam-phat-hanh/:year" element={<Category />} />
             <Route path="tim-kiem" element={<Search />} />
+            <Route path="ho-so" element={<ProfilePage />} />
             <Route path="kham-pha" element={<Discover />} />
             <Route path="yeu-thich" element={<Watchlist />} />
             <Route path="lich-su" element={<History />} />
