@@ -63,26 +63,5 @@ service cloud.firestore {
                       incoming().text is string && incoming().text.size() > 0 && incoming().text.size() <= 1000;
       }
     }
-
-    // Shorts Validation
-    function isValidShort(data) {
-      return data.type in ['clip', 'upload'] &&
-             data.title is string && data.title.size() <= 200 &&
-             data.authorId == request.auth.uid &&
-             data.createdAt is number;
-    }
-
-    match /shorts/{shortId} {
-      allow read: if true; // Publicly readable
-      allow list: if true; // Publicly listable for feed
-      
-      allow create: if isSignedIn() && isValidId(shortId) && isValidShort(incoming());
-      
-      allow update: if isSignedIn() && existing().authorId == request.auth.uid &&
-                    incoming().diff(existing()).affectedKeys().hasAny(['title', 'likesCount']);
-                    
-      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
-    }
   }
 }
-

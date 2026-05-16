@@ -15,7 +15,6 @@ import { CosplayPage } from './pages/CosplayPage';
 import { CosplayDetail } from './pages/CosplayDetail';
 import { WatchRoom } from './pages/WatchRoom';
 import { ProfilePage } from './pages/ProfilePage';
-import { ShortsPage } from './pages/ShortsPage';
 import APIDocs from './pages/APIDocs';
 import { AgeProvider } from './contexts/AgeContext';
 import { AgeGate } from './components/AgeGate';
@@ -29,7 +28,6 @@ export default function App() {
           <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path="video-ngan" element={<ShortsPage />} />
             <Route path="danh-sach/:slug" element={<Category />} />
             <Route path="the-loai/:slug" element={<Category />} />
             <Route path="quoc-gia/:slug" element={<Category />} />
