@@ -22,8 +22,8 @@ export function Watchlist() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <SEO 
-        title="Danh sách yêu thích - PhimHay" 
-        description="Quản lý danh sách các bộ phim bạn yêu thích tại PhimHay."
+        title="Danh sách yêu thích - PhimTop1" 
+        description="Quản lý danh sách các bộ phim bạn yêu thích tại PhimTop1."
       />
 
       <div className="flex items-center justify-between">

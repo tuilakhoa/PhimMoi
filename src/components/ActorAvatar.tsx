@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 interface ActorAvatarProps {
   name: string;
+  avatar?: string;
 }
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -10,10 +11,15 @@ const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 // Simple cache to prevent duplicate requests
 const imageCache: Record<string, string | null> = {};
 
-export const ActorAvatar: React.FC<ActorAvatarProps> = ({ name }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(imageCache[name] || null);
+export const ActorAvatar: React.FC<ActorAvatarProps> = ({ name, avatar }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(avatar || imageCache[name] || null);
 
   useEffect(() => {
+    if (avatar) {
+      setImageUrl(avatar);
+      return;
+    }
+    
     if (!name || imageCache[name] !== undefined || !TMDB_API_KEY) return;
 
     const fetchImage = async () => {

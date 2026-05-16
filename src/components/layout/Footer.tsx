@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useAge } from '../../contexts/AgeContext';
 
 const GENRES = [
   { name: 'Hành Động', slug: 'hanh-dong' },
@@ -31,6 +32,8 @@ const COUNTRIES = [
 const YEARS = Array.from({ length: 2026 - 2018 + 1 }, (_, i) => 2026 - i);
 
 export function Footer() {
+  const { ageStatus, setAgeStatus } = useAge();
+
   return (
     <footer className="bg-zinc-950 border-t border-zinc-800 pt-16 pb-8 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,7 +41,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-rose-500 font-bold text-xl tracking-tight">
               <span className="w-8 h-8 flex items-center justify-center bg-rose-500 text-white rounded-lg">PH</span>
-              PhimHay
+              PhimTop1
             </div>
             <p className="text-zinc-400 leading-relaxed">
               Tất cả nội dung của trang web này được thu thập từ các trang web video chính thống trên Internet và không cung cấp phát trực tuyến chính hãng.
@@ -86,11 +89,15 @@ export function Footer() {
         </div>
         
         <div className="border-t border-zinc-900 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between text-zinc-500 text-xs">
-          <p>Copyright © 2026 PhimHay. All rights reserved.</p>
+          <p>Copyright © 2026 PhimTop1. All rights reserved.</p>
           <div className="flex gap-4 mt-4 md:mt-0">
             <Link to="#" className="hover:text-white transition-colors">Giới thiệu</Link>
             <Link to="#" className="hover:text-white transition-colors">Khiếu nại bản quyền</Link>
-            <Link to="#" className="hover:text-white transition-colors">API</Link>
+            <Link to="/api-docs" className="hover:text-white transition-colors text-rose-400 font-medium italic underline underline-offset-4">API Documentation</Link>
+            <button onClick={() => setAgeStatus(ageStatus === 'adult' ? 'under18' : 'adult')} className="hover:text-white transition-colors relative group">
+              Thiết lập: {ageStatus === 'adult' ? 'Trên 18+' : 'Dưới 18'}
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Nhấn để thay đổi</span>
+            </button>
             <Link to="#" className="hover:text-white transition-colors">Yêu Cầu Phim</Link>
           </div>
         </div>

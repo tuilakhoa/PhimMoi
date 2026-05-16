@@ -22,8 +22,8 @@ export function History() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <SEO 
-        title="Lịch sử xem - PhimHay" 
-        description="Xem lại các bộ phim bạn đã xem gần đây tại PhimHay."
+        title="Lịch sử xem - PhimTop1" 
+        description="Xem lại các bộ phim bạn đã xem gần đây tại PhimTop1."
       />
 
       <div className="flex items-center justify-between">

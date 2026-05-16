@@ -47,9 +47,26 @@ export interface CategoryGroup {
   list: { id: string; name: string }[];
 }
 
+export interface Actor {
+  gender: string;
+  avatar: string;
+  birth_date: string | null;
+  name: string;
+  slug: string;
+  movies_count: number;
+}
+
+export interface ActorListResponse {
+  status: string;
+  paginate: Paginate;
+  items: Actor[];
+}
+
 export interface MovieDetail extends Movie {
   category?: { id: string; name: string; slug: string }[];
   episodes: EpisodeServer[];
+  actors?: Actor[];
+  images?: { path: string }[];
 }
 
 export interface MovieDetailResponse {

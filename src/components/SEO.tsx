@@ -8,17 +8,21 @@ interface SEOProps {
   url?: string;
   type?: string;
   keywords?: string;
+  schema?: any; // Structured data (JSON-LD)
+  canonical?: string;
 }
 
 export const SEO: React.FC<SEOProps> = ({ 
   title, 
-  description = "Xem phim online miễn phí chất lượng cao nhanh nhất với đầy đủ các thể loại. Phim mới cập nhật liên tục mỗi ngày.", 
+  description = "Xem phim online, phim người lớn 18+, JAV Vietsub và ảnh Cosplay Nude nghệ thuật chất lượng cao. Nền tảng giải trí đa thể loại cập nhật liên tục.", 
   image = "https://phim.nguonc.com/public/images/Film/kwPN5eeCEcEh347j7aW8BudNVF4.jpg", // Default fallback image from NguonC
   url = typeof window !== 'undefined' ? window.location.href : '',
   type = "website",
-  keywords
+  keywords = "phim online, xem phim, phim 18+, phim nguoi lon, jav vietsub, phim sex, phim x, cosplay nude, anh nude nghe thuat, phim bom tan, phim top1",
+  schema,
+  canonical
 }) => {
-  const siteName = "PhimHay";
+  const siteName = "PhimTop1";
   const fullTitle = `${title} | ${siteName}`;
 
   return (
@@ -30,6 +34,7 @@ export const SEO: React.FC<SEOProps> = ({
       <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
+      {canonical && <link rel="canonical" href={canonical} />}
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
@@ -45,6 +50,13 @@ export const SEO: React.FC<SEOProps> = ({
       <meta property="twitter:title" content={fullTitle} />
       <meta property="twitter:description" content={description} />
       <meta property="twitter:image" content={image} />
+
+      {/* Structured Data (JSON-LD) */}
+      {schema && (
+        <script type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+      )}
     </Helmet>
   );
 };

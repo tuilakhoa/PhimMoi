@@ -10,27 +10,266 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // AVDB Proxy to bypass CORS
-  app.get('/api/avdb', async (req, res) => {
+  // TopXX Proxy to bypass CORS (replacing old AVDB)
+  app.get('/api/topxx-movies/*', async (req, res) => {
     try {
-      const url = new URL('https://avdbapi.com/api.php/provide/vod');
-      url.searchParams.append('at', 'json');
+      const apiPath = req.params[0];
+      const url = new URL(`https://topxx.vip/api/v1/${apiPath}`);
+      
       Object.keys(req.query).forEach(key => {
         if (req.query[key]) {
           url.searchParams.append(key, req.query[key] as string);
         }
       });
       
-      const apiRes = await fetch(url.toString());
-      console.log(`AVDB Proxy calling: ${url.toString()} - Status: ${apiRes.status}`);
+      const apiRes = await fetch(url.toString(), {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      
+      console.log(`TopXX Proxy calling: ${url.toString()} - Status: ${apiRes.status}`);
+      
       if (!apiRes.ok) {
-        throw new Error(`AVDB API responded with status: ${apiRes.status}`);
+        let errorText = '';
+        try {
+          errorText = await apiRes.text();
+        } catch (e) {}
+        
+        if (apiRes.status === 404) {
+          console.error(`TopXX API Info: Endpoint not found (${url.toString()})`);
+          return res.status(404).json({ error: 'Endpoint not found', data: [], items: [] });
+        }
+        
+        console.error(`TopXX API Error (${apiRes.status}):`, errorText.substring(0, 200) + (errorText.length > 200 ? '...' : ''));
+        return res.status(apiRes.status).send(errorText);
       }
+      
       const data = await apiRes.json();
       res.json(data);
     } catch (err: any) {
-      console.error("AVDB Proxy Error:", err.message);
+      console.error("TopXX Proxy Error:", err.message);
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  // XXVN Proxy
+  app.get('/api/xxvn-movies/*', async (req, res) => {
+    try {
+      const apiPath = req.params[0];
+      const url = new URL(`https://www.xxvnapi.com/api/${apiPath}`);
+      
+      Object.keys(req.query).forEach(key => {
+        if (req.query[key]) {
+          url.searchParams.append(key, req.query[key] as string);
+        }
+      });
+      
+      const apiRes = await fetch(url.toString(), {
+        headers: { 
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://www.xxvnapi.com/'
+        }
+      });
+      
+      if (!apiRes.ok) return res.status(apiRes.status).send(await apiRes.text());
+      res.json(await apiRes.json());
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // VSPhim Proxy
+  app.get('/api/vsphim-movies/*', async (req, res) => {
+    try {
+      const apiPath = req.params[0];
+      const url = new URL(`https://nguon.vsphim.com/api/${apiPath}`);
+      
+      Object.keys(req.query).forEach(key => {
+        if (req.query[key]) {
+          url.searchParams.append(key, req.query[key] as string);
+        }
+      });
+      
+      const apiRes = await fetch(url.toString(), {
+        headers: { 
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://nguon.vsphim.com/'
+        }
+      });
+      
+      if (!apiRes.ok) return res.status(apiRes.status).send(await apiRes.text());
+      res.json(await apiRes.json());
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Cosplay Proxy to bypass CORS
+  app.get('/api/cosplay/*', async (req, res) => {
+    try {
+      const apiPath = req.params[0];
+      const url = new URL(`https://cosplaytele.com/wp-json/wp/v2/${apiPath}`);
+      
+      Object.keys(req.query).forEach(key => {
+        if (req.query[key]) {
+          url.searchParams.append(key, req.query[key] as string);
+        }
+      });
+      
+      const apiRes = await fetch(url.toString(), {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      
+      if (!apiRes.ok) {
+        const errorText = await apiRes.text();
+        return res.status(apiRes.status).send(errorText);
+      }
+      
+      const data = await apiRes.json();
+      
+      // Forward pagination headers from WordPress
+      const total = apiRes.headers.get('x-wp-total');
+      const totalPages = apiRes.headers.get('x-wp-totalpages');
+      if (total) res.setHeader('x-wp-total', total);
+      if (totalPages) res.setHeader('x-wp-totalpages', totalPages);
+      
+      res.json(data);
+    } catch (err: any) {
+      console.error("Cosplay Proxy Error:", err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- API v1 for Crawlers ---
+  
+  // 1. Movie List (Ophim based)
+  app.get('/api/v1/movies', async (req, res) => {
+    try {
+      const page = req.query.page || '1';
+      const apiRes = await fetch(`https://ophim1.com/v1/api/danh-sach/phim-moi-cap-nhat?page=${page}`);
+      if (!apiRes.ok) throw new Error('Source API error');
+      const data = await apiRes.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  // 2. Movie Details
+  app.get('/api/v1/movies/:slug', async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const apiRes = await fetch(`https://ophim1.com/v1/api/phim/${slug}`);
+      if (!apiRes.ok) throw new Error('Source API error');
+      const data = await apiRes.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  // 3. Adult Movies (TopXX based)
+  app.get('/api/v1/adult/movies', async (req, res) => {
+    try {
+      const page = req.query.page || '1';
+      const apiRes = await fetch(`https://topxx.vip/api/v1/movies?page=${page}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!apiRes.ok) throw new Error('Source API error');
+      const data = await apiRes.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  // 3.1. Adult Movie Details (TopXX)
+  app.get('/api/v1/adult/movies/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+      const apiRes = await fetch(`https://topxx.vip/api/v1/movies/${id}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!apiRes.ok) throw new Error('Source API error');
+      const data = await apiRes.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  // 6. Search Movies (Ophim based)
+  app.get('/api/v1/search', async (req, res) => {
+    try {
+      const keyword = req.query.keyword || '';
+      const limit = req.query.limit || '10';
+      const apiRes = await fetch(`https://ophim1.com/v1/api/tim-kiem?keyword=${keyword}&limit=${limit}`);
+      if (!apiRes.ok) throw new Error('Source API error');
+      const data = await apiRes.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  // 4. Cosplay Albums
+  app.get('/api/v1/cosplay/albums', async (req, res) => {
+    try {
+      const page = req.query.page || '1';
+      const apiRes = await fetch(`https://cosplaytele.com/wp-json/wp/v2/posts?page=${page}&per_page=20`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!apiRes.ok) throw new Error('Source API error');
+      const data = await apiRes.json();
+      
+      // Map to a cleaner structure for crawlers
+      const albums = data.map((post: any) => ({
+        id: post.id,
+        title: post.title.rendered,
+        slug: post.slug,
+        date: post.date,
+        link: `/cosplay/${post.slug}`,
+        thumbnail: post.jetpack_featured_media_url || post.yoast_head_json?.og_image?.[0]?.url
+      }));
+      
+      res.json({
+        status: 'success',
+        total: apiRes.headers.get('x-wp-total'),
+        pages: apiRes.headers.get('x-wp-totalpages'),
+        items: albums
+      });
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  // 5. Cosplay Album Details
+  app.get('/api/v1/cosplay/albums/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+      const apiRes = await fetch(`https://cosplaytele.com/wp-json/wp/v2/posts/${id}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!apiRes.ok) throw new Error('Source API error');
+      const data = await apiRes.json();
+      
+      res.json({
+        status: 'success',
+        id: data.id,
+        title: data.title.rendered,
+        content: data.content.rendered,
+        date: data.date,
+        thumbnail: data.jetpack_featured_media_url
+      });
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
     }
   });
 
@@ -49,14 +288,65 @@ async function startServer() {
     try {
       const slug = req.params.slug;
       
-      // Fetch movie detail from Ophim API
+      // Fetch movie detail from appropriate API for SEO
       let movieData: any = null;
       try {
-        const apiRes = await fetch(`https://ophim1.com/v1/api/phim/${slug}`);
-        if (apiRes.ok) {
-          const json = await apiRes.json();
-          if (json.status === 'success' || json.status === true) {
-            movieData = json.data?.item;
+        if (slug.startsWith('tx-')) {
+          const realId = slug.replace('tx-', '');
+          const apiRes = await fetch(`https://topxx.vip/api/v1/movies/${realId}`);
+          if (apiRes.ok) {
+            const json = await apiRes.json();
+            if (json.status === 'success' && json.data) {
+              const item = json.data;
+              const trans = item.trans?.find((t: any) => t.locale === 'vi') || item.trans?.[0] || {};
+              movieData = {
+                name: trans.title,
+                origin_name: trans.seo_title || trans.title,
+                content: trans.content || trans.description,
+                poster_url: item.images?.[0]?.path || item.thumbnail,
+                category: item.genres?.map((g: any) => ({ 
+                  name: g.trans?.find((t: any) => t.locale === 'vi')?.name || g.trans?.[0]?.name 
+                }))
+              };
+            }
+          }
+        } else if (slug.startsWith('xx-')) {
+          const realId = slug.replace('xx-', '');
+          const apiRes = await fetch(`https://www.xxvnapi.com/api/phim/${realId}`);
+          if (apiRes.ok) {
+            const json = await apiRes.json();
+            if (json.status && json.movie) {
+              const item = json.movie;
+              movieData = {
+                name: item.name,
+                origin_name: item.origin_name,
+                content: item.content,
+                poster_url: item.thumb_url || item.poster_url
+              };
+            }
+          }
+        } else if (slug.startsWith('vs-')) {
+          const realId = slug.replace('vs-', '');
+          const apiRes = await fetch(`https://nguon.vsphim.com/api/phim/${realId}`);
+          if (apiRes.ok) {
+            const json = await apiRes.json();
+            if (json.status === 'success' && json.movie) {
+              const item = json.movie;
+              movieData = {
+                name: item.name,
+                origin_name: item.origin_name,
+                content: item.content,
+                poster_url: item.thumb_url || item.poster_url
+              };
+            }
+          }
+        } else {
+          const apiRes = await fetch(`https://ophim1.com/v1/api/phim/${slug}`);
+          if (apiRes.ok) {
+            const json = await apiRes.json();
+            if (json.status === 'success' || json.status === true) {
+              movieData = json.data?.item;
+            }
           }
         }
       } catch (err) {
@@ -74,7 +364,7 @@ async function startServer() {
 
       // If we have movie data, replace the meta tags
       if (movieData) {
-        const title = `Xem phim ${movieData.name || ''} (${movieData.origin_name || ''}) Vietsub Thuyết minh mới nhất | PhimHay`;
+        const title = `Xem phim ${movieData.name || ''} (${movieData.origin_name || ''}) Vietsub Thuyết minh mới nhất | PhimTop1`;
         const descriptionRaw = movieData.content || movieData.description || '';
         const description = descriptionRaw.replace(/<[^>]+>/g, '').trim().substring(0, 160) + '...';
         

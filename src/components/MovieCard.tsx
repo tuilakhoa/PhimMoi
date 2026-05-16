@@ -34,6 +34,11 @@ export const MovieCard: React.FC<{ movie: Movie }> = ({ movie }) => {
 
         {/* Labels */}
         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+          {movie.slug.startsWith('tx-') && (
+            <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg border border-rose-500 animate-pulse">
+              18+
+            </span>
+          )}
           {movie.quality && (
             <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider shadow-sm">
               {movie.quality}

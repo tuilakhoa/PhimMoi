@@ -1,5 +1,26 @@
 {
+  "version": 2,
   "rewrites": [
+    {
+      "source": "/api/cosplay/(.*)",
+      "destination": "/api/cosplay-proxy?path=$1"
+    },
+    {
+      "source": "/api/topxx-movies/(.*)",
+      "destination": "/api/topxx-proxy?path=$1"
+    },
+    {
+      "source": "/api/xxvn-movies/(.*)",
+      "destination": "/api/xxvn-proxy?path=$1"
+    },
+    {
+      "source": "/api/vsphim-movies/(.*)",
+      "destination": "/api/vsphim-proxy?path=$1"
+    },
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://topxx.vip/api/v1/:path*"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

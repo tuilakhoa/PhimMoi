@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { nguoncApi } from '../services/api';
-import { avdbApi } from '../services/avdbService';
+import { topxxApi } from '../services/topxxService';
+import { vsphimApi, xxvnApi } from '../services/adultService';
 import { MovieDetail, EpisodeItem, Movie } from '../types';
 import { Loader2, Play, Calendar, Clock, Globe, Search, ArrowDownAZ, ArrowUpZA, Lightbulb, LightbulbOff } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -33,10 +34,18 @@ export function MovieDetailPage() {
       setLoading(true);
       setTmdbScore(null);
       try {
-        const isAdult = slug.startsWith('av-');
-        const res = isAdult 
-          ? await avdbApi.getMovieDetail(slug)
-          : await nguoncApi.getMovieDetail(slug);
+        const isAdult = slug.startsWith('av-') || slug.startsWith('tx-') || slug.startsWith('vs-') || slug.startsWith('xx-');
+        
+        let res;
+        if (slug.startsWith('xx-')) {
+          res = await xxvnApi.getMovieDetail(slug);
+        } else if (slug.startsWith('vs-')) {
+          res = await vsphimApi.getMovieDetail(slug);
+        } else if (slug.startsWith('tx-') || slug.startsWith('av-')) {
+          res = await topxxApi.getMovieDetail(slug);
+        } else {
+          res = await nguoncApi.getMovieDetail(slug);
+        }
 
         if (res.movie) {
           setMovie(res.movie);
@@ -82,10 +91,14 @@ export function MovieDetailPage() {
               setRelatedLoading(false);
             }
           } else if (isAdult) {
-             // For adult, just fetch new adult movies
+             // For adult, fetch new adult movies from same provider
              setRelatedLoading(true);
              try {
-                const relatedRes = await avdbApi.getNewMovies(1);
+                let relatedRes;
+                if (slug.startsWith('xx-')) relatedRes = await xxvnApi.getNewMovies(1);
+                else if (slug.startsWith('vs-')) relatedRes = await vsphimApi.getNewMovies(1);
+                else relatedRes = await topxxApi.getNewMovies(1);
+                
                 setRelatedMovies(
                   relatedRes.items.filter((m: any) => m.slug !== slug).slice(0, 12)
                 );
@@ -118,17 +131,68 @@ export function MovieDetailPage() {
   }
 
   const generateKeywords = (movie: MovieDetail) => {
+    const isAdult = slug?.startsWith('av-') || slug?.startsWith('tx-') || slug?.startsWith('vs-') || slug?.startsWith('xx-');
     const base = `xem phim, xem phim online, phim hay, phim vietsub, phim thuyết minh, ${movie.name}, ${movie.original_name}`;
     const casts = movie.casts ? `, ${movie.casts}` : '';
     const director = movie.director ? `, ${movie.director}` : '';
     const year = movie.created ? `, phim ${new Date(movie.created).getFullYear()}` : '';
     
+    let adultKeywords = '';
+    if (isAdult) {
+      adultKeywords = ', phim 18+, jav vietsub, phim nguoi lon, phim sex, jav hd, phim jav khong che, jav uncen';
+      if (movie.actors) {
+        movie.actors.forEach(a => { adultKeywords += `, diễn viên ${a.name}, jav ${a.name}, ${a.name} porn` });
+      }
+    }
+
     let cats = '';
     if (movie.category && Array.isArray(movie.category)) {
       movie.category.forEach(c => { cats += `, phim ${c.name.toLowerCase()}` });
     }
     
-    return `${base}${casts}${director}${year}${cats}`;
+    return `${base}${casts}${director}${year}${cats}${adultKeywords}`;
+  };
+
+  const getMovieSchema = (movie: MovieDetail) => {
+    const isAdult = slug?.startsWith('av-') || slug?.startsWith('tx-') || slug?.startsWith('vs-') || slug?.startsWith('xx-');
+    return {
+      "@context": "https://schema.org",
+      "@type": "Movie",
+      "name": movie.name,
+      "alternateName": movie.original_name,
+      "description": movie.description?.replace(/<[^>]+>/g, '').trim(),
+      "image": movie.poster_url || movie.thumb_url,
+      "dateCreated": movie.created,
+      "director": movie.director ? {
+        "@type": "Person",
+        "name": movie.director
+      } : undefined,
+      "actor": movie.actors ? movie.actors.map(a => ({
+        "@type": "Person",
+        "name": a.name
+      })) : (movie.casts ? movie.casts.split(',').map(name => ({
+        "@type": "Person",
+        "name": name.trim()
+      })) : []),
+      "genre": movie.category?.map(c => c.name),
+      "duration": movie.time,
+      "isFamilyFriendly": !isAdult
+    };
+  };
+
+  const generateTitle = (movie: MovieDetail, activeEpisode: EpisodeItem | null) => {
+    const isAdult = slug?.startsWith('av-') || slug?.startsWith('tx-') || slug?.startsWith('vs-') || slug?.startsWith('xx-');
+    if (isAdult) {
+      if (activeEpisode) {
+        return `Xem phim ${movie.name} - ${activeEpisode.name} Vietsub JAV 18+`;
+      }
+      return `Xem phim ${movie.name} - Phim JAV 18+ Vietsub Cực Hay HD`;
+    }
+    
+    if (activeEpisode) {
+      return `Xem phim ${movie.name} (${movie.original_name}) - ${activeEpisode.name} Vietsub Thuyết minh | PhimTop1`;
+    }
+    return `Xem phim ${movie.name} (${movie.original_name}) Vietsub Thuyết minh mới nhất | PhimTop1`;
   };
 
   return (
@@ -140,11 +204,12 @@ export function MovieDetailPage() {
         />
       )}
       <SEO 
-          title={activeEpisode ? `Xem phim ${movie.name} (${movie.original_name}) - ${activeEpisode.name} Vietsub Thuyết minh` : `Xem phim ${movie.name} (${movie.original_name}) Vietsub Thuyết minh mới nhất`}
-          description={movie.description ? movie.description.replace(/<[^>]+>/g, '').trim().substring(0, 160) + '...' : `Xem phim ${movie.name} (${movie.original_name}) vietsub thuyết minh chất lượng cao. Cập nhật mới nhất.`}
+          title={generateTitle(movie, activeEpisode)}
+          description={movie.description ? movie.description.replace(/<[^>]+>/g, '').trim().substring(0, 160).replace(/\s+/g, ' ') + '...' : `Xem phim ${movie.name} (${movie.original_name}) vietsub thuyết minh chất lượng cao. Cập nhật mới nhất tại PhimTop1.`}
           image={movie.poster_url || movie.thumb_url}
           keywords={generateKeywords(movie)}
           type="video.movie"
+          schema={getMovieSchema(movie)}
         />
         {/* Player Section */}
         {activeEpisode && (
@@ -182,6 +247,8 @@ export function MovieDetailPage() {
                 src={activeEpisode.embed || undefined}
                 className="w-full h-full"
                 allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                referrerPolicy="no-referrer"
                 title="Movie Player"
               ></iframe>
             </div>
@@ -253,7 +320,20 @@ export function MovieDetailPage() {
           </div>
 
           <div className="space-y-2 pt-4">
-            {movie.casts && (
+            {(movie.actors && movie.actors.length > 0) ? (
+              <div className="pt-2">
+                <span className="text-zinc-500 font-medium text-sm block mb-3">Diễn viên 18+:</span>
+                <div className="flex flex-wrap gap-4">
+                  {movie.actors.map((actor, idx) => (
+                    <ActorAvatar 
+                      key={`${idx}-${actor.slug}`} 
+                      name={actor.name} 
+                      avatar={actor.avatar} 
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : movie.casts && (
               <div className="pt-2">
                 <span className="text-zinc-500 font-medium text-sm block mb-3">Diễn viên:</span>
                 <div className="flex flex-wrap gap-4">
@@ -357,6 +437,29 @@ export function MovieDetailPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Images Gallery */}
+      {movie.images && movie.images.length > 0 && (
+        <div className="pt-8 border-t border-zinc-800 space-y-6">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-rose-500 rounded-full inline-block"></span>
+            Ảnh phim
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {movie.images.map((img, idx) => (
+              <div key={idx} className="aspect-video rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 group cursor-pointer">
+                <img 
+                  src={img.path} 
+                  alt={`Screenshot ${idx + 1}`} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                  onClick={() => window.open(img.path, '_blank')}
+                />
+              </div>
+            ))}
           </div>
         </div>
       )}

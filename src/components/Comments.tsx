@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { storage, Comment } from '../lib/storage';
-import { User, Send, Star, MessageSquare } from 'lucide-react';
+import { User, Send, Star, MessageSquare, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface CommentsProps {
@@ -13,10 +13,28 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
   const [userName, setUserName] = useState('');
   const [rating, setRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sortBy, setSortBy] = useState<'newest' | 'helpful'>('newest');
 
   useEffect(() => {
     setComments(storage.getComments(movieSlug));
   }, [movieSlug]);
+
+  const sortedComments = useMemo(() => {
+    return [...comments].sort((a, b) => {
+      if (sortBy === 'newest') {
+        return b.timestamp - a.timestamp;
+      } else {
+        const netA = (a.likes || 0) - (a.dislikes || 0);
+        const netB = (b.likes || 0) - (b.dislikes || 0);
+        return netB - netA;
+      }
+    });
+  }, [comments, sortBy]);
+
+  const handleVote = (id: string, type: 'like' | 'dislike', increment: boolean) => {
+    storage.updateCommentVotes(id, type, increment);
+    setComments(storage.getComments(movieSlug));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +61,23 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
           <span className="w-1.5 h-6 bg-rose-500 rounded-full inline-block"></span>
           Bình luận & Đánh giá ({comments.length})
         </h2>
+        
+        {comments.length > 0 && (
+          <div className="flex bg-zinc-900 rounded-lg p-1 border border-zinc-800">
+            <button
+              onClick={() => setSortBy('newest')}
+              className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", sortBy === 'newest' ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white")}
+            >
+              Mới nhất
+            </button>
+            <button
+              onClick={() => setSortBy('helpful')}
+              className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", sortBy === 'helpful' ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white")}
+            >
+              Hữu ích
+            </button>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="bg-zinc-900/50 p-6 rounded-xl border border-zinc-800 space-y-4">
@@ -102,14 +137,14 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
       </form>
 
       <div className="space-y-6">
-        {comments.length === 0 ? (
+        {sortedComments.length === 0 ? (
           <div className="text-center py-12 bg-zinc-950/30 rounded-xl border border-dashed border-zinc-800">
             <MessageSquare className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
             <p className="text-zinc-500">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
           </div>
         ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="flex gap-4 p-4 bg-zinc-950/20 rounded-xl border border-zinc-800/50 hover:border-rose-500/10 transition-colors">
+          sortedComments.map((comment) => (
+            <div key={comment.id} className="flex gap-4 p-4 bg-zinc-950/20 rounded-xl border border-zinc-800/50 hover:border-rose-500/10 transition-colors group">
               <div className="shrink-0 w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
                 <User className="w-5 h-5 text-rose-500" />
               </div>
@@ -123,7 +158,21 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
                     <Star key={s} className={cn("w-3 h-3", s <= comment.rating ? "fill-yellow-500 text-yellow-500" : "text-zinc-800")} />
                   ))}
                 </div>
-                <p className="text-zinc-400 text-sm leading-relaxed">{comment.content}</p>
+                <p className="text-zinc-400 text-sm leading-relaxed mb-3">{comment.content}</p>
+                <div className="flex items-center gap-4 mt-2">
+                  <button 
+                    onClick={() => handleVote(comment.id, 'like', true)}
+                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-rose-500 transition-colors"
+                  >
+                    <ThumbsUp className="w-3.5 h-3.5" /> Thích ({comment.likes || 0})
+                  </button>
+                  <button 
+                    onClick={() => handleVote(comment.id, 'dislike', true)}
+                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    <ThumbsDown className="w-3.5 h-3.5" /> Không thích ({comment.dislikes || 0})
+                  </button>
+                </div>
               </div>
             </div>
           ))
