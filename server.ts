@@ -2,6 +2,12 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { createServer as createViteServer } from "vite";
+import multer from "multer";
+
+const upload = multer({
+  dest: path.join(process.cwd(), "public-uploads"),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
+});
 
 // Fallback image
 const DEFAULT_IMAGE = "https://phim.nguonc.com/public/images/Film/kwPN5eeCEcEh347j7aW8BudNVF4.jpg";
@@ -9,6 +15,20 @@ const DEFAULT_IMAGE = "https://phim.nguonc.com/public/images/Film/kwPN5eeCEcEh34
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  if (!fs.existsSync(path.join(process.cwd(), "public-uploads"))) {
+    fs.mkdirSync(path.join(process.cwd(), "public-uploads"));
+  }
+
+  app.use("/uploads", express.static(path.join(process.cwd(), "public-uploads")));
+
+  app.post("/api/upload", upload.single("video"), (req, res) => {
+    const file = (req as any).file;
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    res.json({ url: `/uploads/${file.filename}` });
+  });
 
   // TopXX Proxy to bypass CORS (replacing old AVDB)
   app.get('/api/topxx-movies/*', async (req, res) => {

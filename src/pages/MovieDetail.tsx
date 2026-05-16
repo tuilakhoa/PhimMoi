@@ -4,7 +4,7 @@ import { nguoncApi } from '../services/api';
 import { topxxApi } from '../services/topxxService';
 import { vsphimApi, xxvnApi } from '../services/adultService';
 import { MovieDetail, EpisodeItem, Movie } from '../types';
-import { Loader2, Play, Calendar, Clock, Globe, Search, ArrowDownAZ, ArrowUpZA, Lightbulb, LightbulbOff } from 'lucide-react';
+import { Loader2, Play, Calendar, Clock, Globe, Search, ArrowDownAZ, ArrowUpZA, Lightbulb, LightbulbOff, Smartphone, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { SEO } from '../components/SEO';
 import { DeviceCast } from '../components/DeviceCast';
@@ -15,7 +15,8 @@ import { WatchlistButton } from '../components/WatchlistButton';
 import { Comments } from '../components/Comments';
 import { storage } from '../lib/storage';
 import { roomService } from '../services/roomService';
-import { auth, signInWithGoogle } from '../lib/firebase';
+import { auth, signInWithGoogle, db } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { Users } from 'lucide-react';
 
 export function MovieDetailPage() {
@@ -58,6 +59,50 @@ export function MovieDetailPage() {
   const [episodeSearch, setEpisodeSearch] = useState('');
   const [isReversed, setIsReversed] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isCreateShortModalOpen, setIsCreateShortModalOpen] = useState(false);
+  const [shortTitle, setShortTitle] = useState('');
+  const [shortStartTime, setShortStartTime] = useState(0);
+  const [shortEndTime, setShortEndTime] = useState(30);
+  const [creatingShort, setCreatingShort] = useState(false);
+
+  const handleCreateShort = async () => {
+    if (!movie || !activeEpisode) return;
+    if (!auth.currentUser) {
+      if (confirm("Bạn cần đăng nhập để tạo Video Ngắn. Đăng nhập ngay?")) {
+        await signInWithGoogle().catch(console.error);
+      }
+      return;
+    }
+    if (!shortTitle.trim()) return alert("Vui lòng nhập mô tả!");
+    if (shortEndTime <= shortStartTime) return alert("Thời gian kết thúc phải lớn hơn thời gian bắt đầu!");
+    if (shortEndTime - shortStartTime > 120) return alert("Video ngắn không được vượt quá 120 giây!");
+
+    setCreatingShort(true);
+    try {
+      await addDoc(collection(db, 'shorts'), {
+        type: 'clip',
+        title: shortTitle,
+        movieSlug: movie.slug,
+        movieName: movie.name,
+        startTime: shortStartTime,
+        endTime: shortEndTime,
+        authorId: auth.currentUser.uid,
+        authorName: auth.currentUser.displayName || 'User',
+        authorPhoto: auth.currentUser.photoURL || '',
+        likesCount: 0,
+        createdAt: Date.now()
+      });
+      alert("Tạo Video Ngắn thành công!");
+      setIsCreateShortModalOpen(false);
+      setShortTitle('');
+    } catch (e) {
+      console.error(e);
+      alert("Lỗi tạo Video Ngắn");
+    } finally {
+      setCreatingShort(false);
+    }
+  };
+
   const [tmdbScore, setTmdbScore] = useState<number | null>(null);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [relatedMovies, setRelatedMovies] = useState<Movie[]>([]);
@@ -256,6 +301,13 @@ export function MovieDetailPage() {
                </h2>
                <div className="flex items-center gap-2">
                  <button 
+                  onClick={() => setIsCreateShortModalOpen(true)}
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20"
+                 >
+                    <Smartphone className="w-4 h-4" />
+                    <span>Tạo Video Ngắn</span>
+                 </button>
+                 <button 
                     onClick={handleCreateWatchParty}
                     disabled={creatingRoom}
                     className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-rose-600 text-white hover:bg-rose-500 transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50"
@@ -297,6 +349,67 @@ export function MovieDetailPage() {
                 title="Movie Player"
               ></iframe>
             </div>
+            
+            {/* Create Short Modal */}
+            {isCreateShortModalOpen && (
+              <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+                <div className="bg-zinc-900 rounded-2xl w-full max-w-md border border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+                  <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
+                    <h2 className="font-bold text-lg flex items-center gap-2">
+                      <Smartphone className="w-5 h-5 text-indigo-500" /> Tạo Video Ngắn
+                    </h2>
+                    <button onClick={() => setIsCreateShortModalOpen(false)} className="text-zinc-400 hover:text-white p-1 rounded-full hover:bg-zinc-800">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <p className="text-sm text-zinc-400">Trích xuất một đoạn video từ tập phim này để chia sẻ (tối đa 120 giây).</p>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-300 mb-1">Mô tả / Tiêu đề</label>
+                      <input 
+                        type="text" 
+                        maxLength={100}
+                        value={shortTitle}
+                        onChange={e => setShortTitle(e.target.value)}
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 focus:outline-none focus:border-indigo-500 transition-colors"
+                        placeholder="Khoảnh khắc hay nhất tập này..."
+                      />
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-zinc-300 mb-1">Bắt đầu (giây)</label>
+                        <input 
+                          type="number" 
+                          min={0}
+                          value={shortStartTime}
+                          onChange={e => setShortStartTime(Number(e.target.value))}
+                          className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 focus:outline-none focus:border-indigo-500 transition-colors"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-zinc-300 mb-1">Kết thúc (giây)</label>
+                        <input 
+                          type="number" 
+                          min={1}
+                          value={shortEndTime}
+                          onChange={e => setShortEndTime(Number(e.target.value))}
+                          className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 focus:outline-none focus:border-indigo-500 transition-colors"
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      disabled={!shortTitle.trim() || creatingShort}
+                      onClick={handleCreateShort}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-6"
+                    >
+                      {creatingShort ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                      {creatingShort ? "Đang tạo..." : "Xác nhận tạo Short"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <DeviceCast currentEpisode={activeEpisode} movie={movie} />
           </div>
         )}

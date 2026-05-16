@@ -29,6 +29,26 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "userName", "text", "timestamp"]
+    },
+    "Short": {
+      "title": "Short Video",
+      "description": "A short video clip uploaded or clipped from a movie",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["clip", "upload"] },
+        "title": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "movieSlug": { "type": "string" },
+        "movieName": { "type": "string" },
+        "startTime": { "type": "number" },
+        "endTime": { "type": "number" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "likesCount": { "type": "number" },
+        "createdAt": { "type": "number", "description": "Timestamp in milliseconds" }
+      },
+      "required": ["type", "title", "authorId", "createdAt"]
     }
   },
   "firestore": {
@@ -39,6 +59,10 @@
     "rooms/{roomId}/chat": {
       "schema": "Chat",
       "description": "Sub-collection for messages in a room"
+    },
+    "shorts": {
+      "schema": "Short",
+      "description": "Top-level collection for short videos"
     }
   }
 }

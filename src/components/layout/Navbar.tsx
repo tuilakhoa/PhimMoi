@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Menu, X, MonitorPlay, Heart, History, Sparkles, Film, Tv, PlayCircle, Flame, Lock, User, Camera, LogOut } from 'lucide-react';
+import { Search, Menu, X, MonitorPlay, Heart, History, Sparkles, Film, Tv, PlayCircle, Flame, Lock, User, Camera, LogOut, Smartphone } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAge } from '../../contexts/AgeContext';
 import { auth, signInWithGoogle } from '../../lib/firebase';
@@ -8,6 +8,7 @@ import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth
 
 const ALL_LINKS = [
   { name: 'Phim Mới', slug: '/', icon: PlayCircle },
+  { name: 'Video Ngắn', slug: '/video-ngan', icon: Smartphone },
   { name: 'TV Shows', slug: '/danh-sach/tv-shows', icon: MonitorPlay },
   { name: 'Phim Bộ', slug: '/danh-sach/phim-bo', icon: Tv },
   { name: 'Phim Lẻ', slug: '/danh-sach/phim-le', icon: Film },
