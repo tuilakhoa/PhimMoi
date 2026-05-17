@@ -1,4 +1,5 @@
 import { MovieListResponse, MovieDetailResponse, Movie } from '../types';
+import { slugify } from '../lib/utils';
 
 const API_BASE = '/api/ophim-movies';
 
@@ -206,6 +207,14 @@ export const nguoncApi = {
                 item: {
                   ...ncData,
                   actor: ncData.casts ? ncData.casts.split(',').map((s:string) => s.trim()) : [],
+                  category: ncData.category 
+                    ? (Array.isArray(ncData.category) 
+                        ? ncData.category 
+                        : Object.values(ncData.category)
+                            .flatMap((c: any) => c.list || [])
+                            .map((cat: any) => ({ ...cat, slug: cat.slug || slugify(cat.name || '') }))
+                      ) 
+                    : [],
                   content: ncData.description || '',
                   poster_url: ncData.poster_url || ncData.thumb_url
                 }
