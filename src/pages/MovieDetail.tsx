@@ -225,9 +225,9 @@ export function MovieDetailPage() {
     }
     
     if (activeEpisode) {
-      return `Xem phim ${movie.name} (${movie.original_name}) - ${activeEpisode.name} Vietsub Thuyết minh | PhimTop1`;
+      return `Xem phim ${movie.name} (${movie.original_name}) - ${activeEpisode.name} Vietsub Thuyết minh`;
     }
-    return `Xem phim ${movie.name} (${movie.original_name}) Vietsub Thuyết minh mới nhất | PhimTop1`;
+    return `Xem phim ${movie.name} (${movie.original_name}) Vietsub Thuyết minh mới nhất`;
   };
 
   return (

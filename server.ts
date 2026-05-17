@@ -352,32 +352,32 @@ async function startServer() {
     'hoat-hinh': 'Hoạt Hình',
     'phim-dang-chieu': 'Phim Đang Chiếu',
     'short-drama': 'Phim Short Drama',
-    'hanh-dong': 'Phim Hành Động',
-    'tinh-cam': 'Phim Tình Cảm',
-    'hai-huoc': 'Phim Hài Hước',
-    'co-trang': 'Phim Cổ Trang',
-    'tam-ly': 'Phim Tâm Lý',
-    'hinh-su': 'Phim Hình Sự',
-    'chien-tranh': 'Phim Chiến Tranh',
-    'the-thao': 'Phim Thể Thao',
-    'vo-thuat': 'Phim Võ Thuật',
-    'vien-tuong': 'Phim Viễn Tưởng',
-    'phieu-luu': 'Phim Phiếu Lưu',
-    'khoa-hoc': 'Phim Khoa Học',
-    'kinh-di': 'Phim Kinh Dị',
-    'am-nhac': 'Phim Âm Nhạc',
-    'than-thoai': 'Phim Thần Thoại',
-    'tai-lieu': 'Phim Tài Liệu',
-    'gia-dinh': 'Phim Gia Đình',
-    'chinh-kich': 'Phim Chính Kịch',
-    'bi-an': 'Phim Bí ẩn',
-    'hoc-duong': 'Phim Học Đường',
-    'kinh-dien': 'Phim Kinh Điển',
+    'hanh-dong': 'Hành Động',
+    'tinh-cam': 'Tình Cảm',
+    'hai-huoc': 'Hài Hước',
+    'co-trang': 'Cổ Trang',
+    'tam-ly': 'Tâm Lý',
+    'hinh-su': 'Hình Sự',
+    'chien-tranh': 'Chiến Tranh',
+    'the-thao': 'Thể Thao',
+    'vo-thuat': 'Võ Thuật',
+    'vien-tuong': 'Viễn Tưởng',
+    'phieu-luu': 'Phiêu Lưu',
+    'khoa-hoc': 'Khoa Học',
+    'kinh-di': 'Kinh Dị',
+    'am-nhac': 'Âm Nhạc',
+    'than-thoai': 'Thần Thoại',
+    'tai-lieu': 'Tài Liệu',
+    'gia-dinh': 'Gia Đình',
+    'chinh-kich': 'Chính Kịch',
+    'bi-an': 'Bí ẩn',
+    'hoc-duong': 'Học Đường',
+    'kinh-dien': 'Kinh Điển',
     'phim-18': 'Phim 18+',
-    'hai': 'Phim Hài',
-    'gia-tuong': 'Phim Giả Tưởng',
-    'lich-su': 'Phim Lịch Sử',
-    'lang-man': 'Phim Lãng Mạn'
+    'hai': 'Hài',
+    'gia-tuong': 'Giả Tưởng',
+    'lich-su': 'Lịch Sử',
+    'lang-man': 'Lãng Mạn'
   };
 
   const COUNTRY_MAP: Record<string, string> = {
@@ -400,31 +400,38 @@ async function startServer() {
     let output = template;
     const { title, description, image = DEFAULT_IMAGE, keywords, url } = seo;
 
-    output = output.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
+    // Remove existing title and meta tags to avoid duplicates
+    output = output.replace(/<title>.*?<\/title>/gi, '');
     
-    // Replace or add meta tags
-    const metas = [
-      { name: 'description', content: description },
-      { property: 'og:title', content: title },
-      { property: 'og:description', content: description },
-      { property: 'og:image', content: image },
-      { property: 'og:url', content: url || '' },
-      { name: 'twitter:title', content: title },
-      { name: 'twitter:description', content: description },
-      { name: 'twitter:image', content: image },
-      { name: 'keywords', content: keywords || "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1" }
+    const metaTagsToRemove = [
+      'description', 'keywords', 'title',
+      'og:title', 'og:description', 'og:image', 'og:url', 'og:type',
+      'twitter:title', 'twitter:description', 'twitter:image', 'twitter:card'
+    ];
+    
+    metaTagsToRemove.forEach(tag => {
+      const regex = new RegExp(`<meta\\s+(name|property)="${tag}"\\s+content="[^"]*"\\s*/?>`, 'gi');
+      output = output.replace(regex, '');
+    });
+
+    // Inject new tags before </head>
+    const newTags = [
+      `<title>${title}</title>`,
+      `<meta name="title" content="${title}">`,
+      `<meta name="description" content="${description}">`,
+      `<meta name="keywords" content="${keywords || "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1"}">`,
+      `<meta property="og:type" content="website">`,
+      `<meta property="og:title" content="${title}">`,
+      `<meta property="og:description" content="${description}">`,
+      `<meta property="og:image" content="${image}">`,
+      `<meta property="og:url" content="${url || ''}">`,
+      `<meta name="twitter:card" content="summary_large_image">`,
+      `<meta name="twitter:title" content="${title}">`,
+      `<meta name="twitter:description" content="${description}">`,
+      `<meta name="twitter:image" content="${image}">`
     ];
 
-    metas.forEach(meta => {
-      const attr = meta.name ? `name="${meta.name}"` : `property="${meta.property}"`;
-      const regex = new RegExp(`<meta\\s+${attr}\\s+content="[^"]*"\\s*/?>`, 'i');
-      if (regex.test(output)) {
-        output = output.replace(regex, `<meta ${attr} content="${meta.content}">`);
-      } else {
-        // If not found, inject before </head>
-        output = output.replace(/<\/head>/i, `  <meta ${attr} content="${meta.content}">\n</head>`);
-      }
-    });
+    output = output.replace(/<\/head>/i, `  ${newTags.join('\n  ')}\n</head>`);
 
     return output;
   };
@@ -510,24 +517,29 @@ async function startServer() {
 
       let template = await getTemplate(req);
 
+      const title = movieData 
+        ? `Xem phim ${movieData.name || ''} (${movieData.origin_name || ''}) Vietsub Thuyết minh mới nhất | PhimTop1`
+        : "Xem phim online mới nhất chất lượng 4K | PhimTop1";
+      
+      const descriptionRaw = movieData ? (movieData.content || movieData.description || '') : "Tổng hợp phim mới nhất, phim hành động, tình cảm, phim 18+ JAV Vietsub cực hay.";
+      const description = descriptionRaw.replace(/<[^>]+>/g, '').trim().substring(0, 160) + '...';
+      
+      let thumb = DEFAULT_IMAGE;
+      const domainImage = "https://img.ophim.live";
       if (movieData) {
-        const title = `Xem phim ${movieData.name || ''} (${movieData.origin_name || ''}) Vietsub Thuyết minh mới nhất | PhimTop1`;
-        const descriptionRaw = movieData.content || movieData.description || '';
-        const description = descriptionRaw.replace(/<[^>]+>/g, '').trim().substring(0, 160) + '...';
-        
-        let thumb = DEFAULT_IMAGE;
-        const domainImage = "https://img.ophim.live";
         if (movieData.poster_url) {
           thumb = movieData.poster_url.startsWith('http') ? movieData.poster_url : `${domainImage}/uploads/movies/${movieData.poster_url}`;
         } else if (movieData.thumb_url) {
           thumb = movieData.thumb_url.startsWith('http') ? movieData.thumb_url : `${domainImage}/uploads/movies/${movieData.thumb_url}`;
         }
-
-        const genreKeywords = (movieData.category || []).map((c: any) => c.name).join(', ');
-        const keywords = `xem phim, xem phim online, phim hay, phim vietsub, phim thuyết minh, ${movieData.name || ''}, ${movieData.origin_name || ''}, ${genreKeywords}`;
-
-        template = injectMeta(template, { title, description, image: thumb, keywords, url: `https://phimtop1.com/film/${slug}` });
       }
+
+      const genreKeywords = (movieData?.category || []).map((c: any) => c.name).join(', ');
+      const keywords = movieData 
+        ? `xem phim, xem phim online, phim hay, phim vietsub, phim thuyết minh, ${movieData.name || ''}, ${movieData.origin_name || ''}, ${genreKeywords}`
+        : "xem phim, xem phim online, phim moi, phim hay, phimtop1";
+
+      template = injectMeta(template, { title, description, image: thumb, keywords, url: `https://phimtop1.com/film/${slug}` });
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
     } catch (e: any) {
