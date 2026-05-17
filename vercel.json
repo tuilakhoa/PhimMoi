@@ -18,6 +18,10 @@
       "destination": "/api/xxvn-proxy?path=$1"
     },
     {
+      "source": "/api/nguonc-movies/(.*)",
+      "destination": "/api/nguonc-proxy?path=$1"
+    },
+    {
       "source": "/api/vsphim-movies/(.*)",
       "destination": "/api/vsphim-proxy?path=$1"
     },
