@@ -345,27 +345,86 @@ async function startServer() {
 
   // --- Dynamic SEO Injection ---
 
+  const CATEGORY_MAP: Record<string, string> = {
+    'phim-bo': 'Phim Bộ',
+    'phim-le': 'Phim Lẻ',
+    'tv-shows': 'TV Shows',
+    'hoat-hinh': 'Hoạt Hình',
+    'phim-dang-chieu': 'Phim Đang Chiếu',
+    'short-drama': 'Phim Short Drama',
+    'hanh-dong': 'Phim Hành Động',
+    'tinh-cam': 'Phim Tình Cảm',
+    'hai-huoc': 'Phim Hài Hước',
+    'co-trang': 'Phim Cổ Trang',
+    'tam-ly': 'Phim Tâm Lý',
+    'hinh-su': 'Phim Hình Sự',
+    'chien-tranh': 'Phim Chiến Tranh',
+    'the-thao': 'Phim Thể Thao',
+    'vo-thuat': 'Phim Võ Thuật',
+    'vien-tuong': 'Phim Viễn Tưởng',
+    'phieu-luu': 'Phim Phiếu Lưu',
+    'khoa-hoc': 'Phim Khoa Học',
+    'kinh-di': 'Phim Kinh Dị',
+    'am-nhac': 'Phim Âm Nhạc',
+    'than-thoai': 'Phim Thần Thoại',
+    'tai-lieu': 'Phim Tài Liệu',
+    'gia-dinh': 'Phim Gia Đình',
+    'chinh-kich': 'Phim Chính Kịch',
+    'bi-an': 'Phim Bí ẩn',
+    'hoc-duong': 'Phim Học Đường',
+    'kinh-dien': 'Phim Kinh Điển',
+    'phim-18': 'Phim 18+',
+    'hai': 'Phim Hài',
+    'gia-tuong': 'Phim Giả Tưởng',
+    'lich-su': 'Phim Lịch Sử',
+    'lang-man': 'Phim Lãng Mạn'
+  };
+
+  const COUNTRY_MAP: Record<string, string> = {
+    'trung-quoc': 'Trung Quốc',
+    'han-quoc': 'Hàn Quốc',
+    'nhat-ban': 'Nhật Bản',
+    'thai-lan': 'Thái Lan',
+    'au-my': 'Âu Mỹ',
+    'viet-nam': 'Việt Nam',
+    'hong-kong': 'Hồng Kông',
+    'an-do': 'Ấn Độ',
+    'phap': 'Pháp',
+    'anh': 'Anh',
+    'duc': 'Đức',
+    'canada': 'Canada',
+    'quoc-gia-khac': 'Quốc gia khác'
+  };
+
   const injectMeta = (template: string, seo: { title: string, description: string, image?: string, keywords?: string, url?: string }) => {
     let output = template;
     const { title, description, image = DEFAULT_IMAGE, keywords, url } = seo;
 
     output = output.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
-    output = output.replace(/<meta\s+name="title"\s+content="[^"]*"\s*\/?>/i, `<meta name="title" content="${title}">`);
-    output = output.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${description}">`);
-    output = output.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${title}">`);
-    output = output.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${description}">`);
     
-    if (image) {
-      output = output.replace(/<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${image}">`);
-      output = output.replace(/<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:image" content="${image}">`);
-    }
+    // Replace or add meta tags
+    const metas = [
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:image', content: image },
+      { property: 'og:url', content: url || '' },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
+      { name: 'twitter:image', content: image },
+      { name: 'keywords', content: keywords || "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1" }
+    ];
 
-    if (keywords) {
-      output = output.replace(/<meta\s+name="keywords"\s+content="[^"]*"\s*\/?>/i, `<meta name="keywords" content="${keywords}">`);
-    }
-
-    output = output.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${title}">`);
-    output = output.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${description}">`);
+    metas.forEach(meta => {
+      const attr = meta.name ? `name="${meta.name}"` : `property="${meta.property}"`;
+      const regex = new RegExp(`<meta\\s+${attr}\\s+content="[^"]*"\\s*/?>`, 'i');
+      if (regex.test(output)) {
+        output = output.replace(regex, `<meta ${attr} content="${meta.content}">`);
+      } else {
+        // If not found, inject before </head>
+        output = output.replace(/<\/head>/i, `  <meta ${attr} content="${meta.content}">\n</head>`);
+      }
+    });
 
     return output;
   };
@@ -467,7 +526,7 @@ async function startServer() {
         const genreKeywords = (movieData.category || []).map((c: any) => c.name).join(', ');
         const keywords = `xem phim, xem phim online, phim hay, phim vietsub, phim thuyết minh, ${movieData.name || ''}, ${movieData.origin_name || ''}, ${genreKeywords}`;
 
-        template = injectMeta(template, { title, description, image: thumb, keywords });
+        template = injectMeta(template, { title, description, image: thumb, keywords, url: `https://phimtop1.com/film/${slug}` });
       }
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
@@ -486,35 +545,65 @@ async function startServer() {
       const url = req.path;
       let template = await getTemplate(req);
       
-      let seo: { title: string, description: string, keywords: string, image?: string } = {
+      let seo: { title: string, description: string, keywords: string, image?: string, url?: string } = {
         title: "PhimTop1 - Xem phim online, Phim 18+ & Cosplay Nude",
         description: "PhimTop1 - Nền tảng giải trí đa kênh: Xem phim online, phim người lớn 18+, JAV Vietsub và ảnh Cosplay Nude nghệ thuật. Chất lượng 4K, cập nhật mỗi ngày.",
-        keywords: "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1"
+        keywords: "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1",
+        url: `https://phimtop1.com${url}`
       };
 
       if (url === '/') {
-        // Already default
+        // Default values apply
       } else if (url.includes('/nguoi-lon/cosplay/')) {
         const id = url.split('/').pop();
         try {
           const apiRes = await fetch(`https://cosplaytele.com/wp-json/wp/v2/posts/${id}`);
           if (apiRes.ok) {
             const data = await apiRes.json();
-            seo.title = `${data.title.rendered} - Album Cosplay Nude Nóng Bỏng | PhimTop1`;
-            seo.description = `Xem bộ ảnh ${data.title.rendered} chất lượng cao, cosplay nude nghệ thuật cực phê tại PhimTop1.`;
+            const titleRaw = data.title?.rendered || 'Album Cosplay';
+            seo.title = `${titleRaw} - Album Cosplay Nude Nóng Bỏng | PhimTop1`;
+            seo.description = `Xem trọn bộ ảnh ${titleRaw} chất lượng cao, hình ảnh cosplay nude nghệ thuật cực phê, cập nhật mới nhất tại PhimTop1.`;
             seo.image = data.jetpack_featured_media_url || DEFAULT_IMAGE;
           }
         } catch (e) {}
-      } else if (url.startsWith('/the-loai/') || url.startsWith('/quoc-gia/')) {
-        const parts = url.split('/');
-        const category = parts[parts.length - 1];
-        seo.title = `Danh sách phim ${category} mới nhất | PhimTop1`;
-        seo.description = `Tổng hợp phim ${category} hay nhất, cập nhật liên tục với chất lượng cao tại PhimTop1.`;
+      } else if (url.startsWith('/the-loai/')) {
+        const slug = url.split('/').pop() || '';
+        const name = CATEGORY_MAP[slug] || slug;
+        seo.title = `Phim ${name} Hay Nhất - Tuyển Chọn Phim ${name} Mới | PhimTop1`;
+        seo.description = `Danh sách tổng hợp phim ${name} chất lượng cao, cập nhật đầy đủ các tập mới nhất. Xem phim ${name} online mượt mà tại PhimTop1.`;
+      } else if (url.startsWith('/quoc-gia/')) {
+        const slug = url.split('/').pop() || '';
+        const name = COUNTRY_MAP[slug] || slug;
+        seo.title = `Phim ${name} Mới Nhất - Xem Phim ${name} Online | PhimTop1`;
+        seo.description = `Khám phá kho phim ${name} đa dạng thể loại, từ bom tấn đến phim truyền hình. PhimTop1 cập nhật phim ${name} liên tục hàng ngày.`;
+      } else if (url.startsWith('/danh-sach/')) {
+        const slug = url.split('/').pop() || '';
+        const name = CATEGORY_MAP[slug] || slug;
+        seo.title = `${name} Mới Cập Nhật - Danh Sách ${name} Hay | PhimTop1`;
+        seo.description = `Cập nhật danh sách ${name} mới nhất, xem online miễn phí chất lượng cao. PhimTop1 - Web xem phim hàng đầu.`;
+      } else if (url.startsWith('/nam-phat-hanh/')) {
+        const year = url.split('/').pop() || '';
+        seo.title = `Phim Phát Hành Năm ${year} - Phim Hay ${year} | PhimTop1`;
+        seo.description = `Tuyển tập những bộ phim xuất sắc nhất phát hành trong năm ${year}. Xem phim online chất lượng 4K tại PhimTop1.`;
       } else if (url === '/nguoi-lon/cosplay') {
         seo.title = "Cosplay Nude - Album Ảnh Nóng Show Hàng Nghệ Thuật | PhimTop1";
-        seo.description = "Bộ sưu tập album ảnh cosplay nude, show hàng, ảnh nóng nghệ thuật từ các hot girl, model nổi tiếng nhất.";
+        seo.description = "Bộ sưu tập album ảnh cosplay nude, show hàng, ảnh nóng nghệ thuật từ các hot girl, model nổi tiếng nhất Châu Á và thế giới.";
+      } else if (url === '/nguoi-lon') {
+        seo.title = "Phim 18+ - Phim Người Lớn JAV Vietsub Mới Nhất | PhimTop1";
+        seo.description = "Chuyên mục phim 18+ dành cho người lớn, JAV Vietsub, phim cấp 3 Thái Lan, Âu Mỹ chất lượng cao, không quảng cáo che khuất.";
       } else if (url === '/kham-pha') {
         seo.title = "Khám Phá Phim Hay - Gợi Ý Xem Phim Cho Bạn | PhimTop1";
+        seo.description = "Bạn không biết xem gì? Hãy khám phá ngay công cụ gợi ý phim thông minh của PhimTop1 để tìm những bộ phim phù hợp nhất với sở thích.";
+      } else if (url === '/dien-vien-18') {
+        seo.title = "Diễn Viên JAV - Danh Sách Idol 18+ Nổi Tiếng | PhimTop1";
+        seo.description = "Thông tin và danh sách phim của những diễn viên JAV nổi tiếng nhất. Tìm kiếm phim theo idol yêu thích của bạn tại PhimTop1.";
+      } else if (url.startsWith('/watch/')) {
+        seo.title = "Phòng Xem Chung - Xem Phim Cùng Bạn Bè | PhimTop1";
+        seo.description = "Tham gia phòng xem phim trực tuyến cùng bạn bè, trò chuyện và cùng thưởng thức những bộ phim hay nhất tại PhimTop1.";
+      } else if (url === '/tim-kiem') {
+        const q = req.query.q as string || '';
+        seo.title = q ? `Kết quả tìm kiếm cho "${q}" | PhimTop1` : "Tìm Kiếm Phim - Kho Phim Lớn Nhất | PhimTop1";
+        seo.description = `Tìm kiếm những bộ phim yêu thích của bạn, từ phim điện ảnh, phim bộ đến phim 18+ JAV Vietsub cực hay tại PhimTop1.`;
       }
 
       template = injectMeta(template, seo);
