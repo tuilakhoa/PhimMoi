@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Menu, X, MonitorPlay, Heart, History, Sparkles, Film, Tv, PlayCircle, Flame, Lock, User, Camera, LogOut } from 'lucide-react';
+import { Search, Menu, X, MonitorPlay, Heart, History, Sparkles, Film, Tv, PlayCircle, Flame, Lock, User, Camera, LogOut, Clapperboard } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAge } from '../../contexts/AgeContext';
 import { auth, signInWithGoogle } from '../../lib/firebase';
@@ -13,6 +13,32 @@ const ALL_LINKS = [
   { name: 'Phim Lẻ', slug: '/danh-sach/phim-le', icon: Film },
   { name: '18+', slug: '/nguoi-lon', icon: Flame, isAdult: true },
   { name: 'Cosplay', slug: '/nguoi-lon/cosplay', icon: Camera, isAdult: true },
+];
+
+const GENRES = [
+  { slug: 'short-drama', name: 'Short Drama' },
+  { slug: 'hanh-dong', name: 'Hành Động' },
+  { slug: 'tinh-cam', name: 'Tình Cảm' },
+  { slug: 'hai-huoc', name: 'Hài Hước' },
+  { slug: 'co-trang', name: 'Cổ Trang' },
+  { slug: 'tam-ly', name: 'Tâm Lý' },
+  { slug: 'hinh-su', name: 'Hình Sự' },
+  { slug: 'chien-tranh', name: 'Chiến Tranh' },
+  { slug: 'the-thao', name: 'Thể Thao' },
+  { slug: 'vo-thuat', name: 'Võ Thuật' },
+  { slug: 'vien-tuong', name: 'Viễn Tưởng' },
+  { slug: 'phieu-luu', name: 'Phiêu Lưu' },
+  { slug: 'khoa-hoc', name: 'Khoa Học' },
+  { slug: 'kinh-di', name: 'Kinh Dị' },
+  { slug: 'am-nhac', name: 'Âm Nhạc' },
+  { slug: 'than-thoai', name: 'Thần Thoại' },
+  { slug: 'tai-lieu', name: 'Tài Liệu' },
+  { slug: 'gia-dinh', name: 'Gia Đình' },
+  { slug: 'chinh-kich', name: 'Chính Kịch' },
+  { slug: 'bi-an', name: 'Bí ẩn' },
+  { slug: 'hoc-duong', name: 'Học Đường' },
+  { slug: 'kinh-dien', name: 'Kinh Điển' },
+  { slug: 'phim-18', name: 'Phim 18+' },
 ];
 
 export function Navbar() {
@@ -115,6 +141,28 @@ export function Navbar() {
                     <Film className="w-4 h-4 text-indigo-500" />
                     Phim Lẻ
                   </Link>
+                </div>
+              </div>
+
+              {/* Thể loại phim Dropdown */}
+              <div className="relative group">
+                <button className="px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-900/50">
+                  <Clapperboard className="w-4 h-4 text-indigo-500" />
+                  Thể loại
+                </button>
+                <div className="absolute left-0 mt-2 w-[480px] bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left grid grid-cols-3 gap-1 p-3">
+                  {GENRES.map(genre => {
+                    if (genre.slug === 'phim-18' && ageStatus === 'under18') return null;
+                    return (
+                      <Link 
+                        key={genre.slug} 
+                        to={`/the-loai/${genre.slug}`} 
+                        className="px-3 py-2 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors truncate"
+                      >
+                        {genre.name}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -254,7 +302,7 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden bg-zinc-950 border-b border-zinc-800 px-4 py-6 space-y-6 animate-in slide-in-from-top duration-300 shadow-2xl">
+          <div className="lg:hidden bg-zinc-950 border-b border-zinc-800 px-4 py-6 space-y-6 animate-in slide-in-from-top duration-300 shadow-2xl h-[calc(100vh-80px)] overflow-y-auto">
             <form onSubmit={handleSearch} className="relative sm:hidden">
               <input
                 type="text"
@@ -292,6 +340,27 @@ export function Navbar() {
                   </Link>
                 );
               })}
+            </div>
+            
+            <div className="space-y-3">
+              <h3 className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold px-3">
+                Thể Loại Phim
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                 {GENRES.map((genre) => {
+                   if (genre.slug === 'phim-18' && ageStatus === 'under18') return null;
+                   return (
+                     <Link
+                       key={genre.slug}
+                       to={`/the-loai/${genre.slug}`}
+                       onClick={() => setIsMobileMenuOpen(false)}
+                       className="px-3 py-2.5 rounded-xl text-sm font-medium bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-all border border-zinc-800/50 text-center"
+                     >
+                       {genre.name}
+                     </Link>
+                   );
+                 })}
+              </div>
             </div>
           </div>
         )}
