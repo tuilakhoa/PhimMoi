@@ -88,6 +88,32 @@ async function startServer() {
     }
   });
 
+  // Nguonc Proxy
+  app.get('/api/nguonc-movies/*', async (req, res) => {
+    try {
+      const apiPath = req.params[0];
+      const url = new URL(`https://phim.nguonc.com/api/${apiPath}`);
+      
+      Object.keys(req.query).forEach(key => {
+        if (req.query[key]) {
+          url.searchParams.append(key, req.query[key] as string);
+        }
+      });
+      
+      const apiRes = await fetch(url.toString(), {
+        headers: { 
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      
+      if (!apiRes.ok) return res.status(apiRes.status).send(await apiRes.text());
+      res.json(await apiRes.json());
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // XXVN Proxy
   app.get('/api/xxvn-movies/*', async (req, res) => {
     try {
