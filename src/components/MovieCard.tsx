@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Activity } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Movie } from '../types';
 import { WatchlistButton } from './WatchlistButton';
 
-export const MovieCard: React.FC<{ movie: Movie; showInteractiveBadge?: boolean }> = ({ movie, showInteractiveBadge }) => {
+export const MovieCard: React.FC<{ movie: Movie }> = ({ movie }) => {
   return (
-    <Link to={`/film/${movie.slug}`} className="group relative rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 transition-all hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(244,63,94,0.15)]">
+    <Link to={`/film/${movie.slug}`} className="group relative rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 transition-all hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
       <div className="aspect-[2/3] relative overflow-hidden">
         <img
           src={movie.thumb_url || undefined}
@@ -22,7 +22,7 @@ export const MovieCard: React.FC<{ movie: Movie; showInteractiveBadge?: boolean 
         
         {/* Play Overlay */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-12 h-12 rounded-full bg-rose-500/90 text-white flex items-center justify-center pl-1 shadow-[0_0_20px_rgba(244,63,94,0.5)] backdrop-blur-sm">
+          <div className="w-12 h-12 rounded-full bg-rose-500/90 text-white flex items-center justify-center pl-1 shadow-lg shadow-rose-500/20 backdrop-blur-sm">
             <Play className="w-5 h-5" />
           </div>
         </div>
@@ -34,31 +34,31 @@ export const MovieCard: React.FC<{ movie: Movie; showInteractiveBadge?: boolean 
 
         {/* Labels */}
         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-          {(movie.slug.startsWith('tx-') || showInteractiveBadge) && (
-            <span className="bg-gradient-to-r from-rose-600 to-pink-600 text-white text-[10px] font-black px-2 py-0.5 rounded flex items-center gap-1 shadow-lg border border-rose-500/30 animate-pulse-slow">
-              <Activity className="w-3 h-3" /> Lovense Supported
+          {movie.slug.startsWith('tx-') && (
+            <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg border border-rose-500 animate-pulse">
+              18+
             </span>
           )}
           {movie.quality && (
-            <span className="bg-rose-500/90 text-white text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider shadow-sm backdrop-blur-sm border border-rose-500/50">
+            <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider shadow-sm">
               {movie.quality}
             </span>
           )}
           {movie.language && (
-            <span className="bg-black/50 backdrop-blur-md text-white border border-white/10 text-[10px] font-medium px-2 py-1 rounded-sm shadow-sm">
+            <span className="bg-white/10 backdrop-blur-md text-white border border-white/20 text-[10px] font-medium px-2 py-1 rounded-sm shadow-sm">
               {movie.language}
             </span>
           )}
         </div>
       </div>
 
-      <div className="p-4 absolute bottom-0 w-full bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pt-12">
+      <div className="p-4 absolute bottom-0 w-full bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent pt-12">
         <h3 className="text-white font-bold text-sm line-clamp-1 group-hover:text-rose-400 transition-colors">
           {movie.name}
         </h3>
         <div className="flex items-center justify-between mt-1 text-xs text-zinc-400">
           <p className="line-clamp-1">{movie.original_name}</p>
-          <span className="shrink-0 font-medium text-rose-500/80">{movie.time || movie.current_episode}</span>
+          <span className="shrink-0">{movie.time || movie.current_episode}</span>
         </div>
       </div>
     </Link>

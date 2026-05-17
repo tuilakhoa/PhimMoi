@@ -28,9 +28,6 @@ export interface RoomState {
   lastUpdated: any;
   hostId: string;
   users: Record<string, { nickname: string; lastActive: any }>;
-  reactions?: Record<string, { type: string; timestamp: number; userId: string }>;
-  toySpeed?: number;
-  toyIntensity?: number;
 }
 
 export interface ChatMessage {
@@ -117,28 +114,6 @@ export const roomService = {
       activeEpisodeName: episodeName,
       playbackState: 'paused',
       currentTime: 0,
-      lastUpdated: serverTimestamp()
-    });
-  },
-
-  async sendReaction(roomId: string, type: 'heart' | 'fire' | 'water' | 'egg') {
-    if (!auth.currentUser) return;
-    const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-    const reactionId = Date.now().toString() + Math.random().toString(36).substring(2, 5);
-    await updateDoc(roomRef, {
-      [`reactions.${reactionId}`]: {
-        type,
-        timestamp: Date.now(),
-        userId: auth.currentUser.uid
-      }
-    });
-  },
-
-  async updateToyControl(roomId: string, speed: number, intensity: number) {
-    const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-    await updateDoc(roomRef, {
-      toySpeed: speed,
-      toyIntensity: intensity,
       lastUpdated: serverTimestamp()
     });
   },

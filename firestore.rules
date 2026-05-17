@@ -49,7 +49,7 @@ service cloud.firestore {
         (
           incoming().hostId == existing().hostId &&
           incoming().movieSlug == existing().movieSlug &&
-          incoming().diff(existing()).affectedKeys().hasAny(['playbackState', 'currentTime', 'lastUpdated', 'users', 'activeEpisodeSlug', 'activeEpisodeName', 'reactions', 'toySpeed', 'toyIntensity'])
+          incoming().diff(existing()).affectedKeys().hasAny(['playbackState', 'currentTime', 'lastUpdated', 'users', 'activeEpisodeSlug', 'activeEpisodeName'])
         )
       );
       

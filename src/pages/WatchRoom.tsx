@@ -19,11 +19,7 @@ import {
   LogOut,
   Loader2,
   Tv,
-  Moon,
-  Heart,
-  Droplets,
-  Flame,
-  Activity
+  Moon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import videojs from 'video.js';
@@ -42,15 +38,10 @@ export function WatchRoom() {
   const [isHost, setIsHost] = useState(false);
   const [theaterMode, setTheaterMode] = useState(false);
   
-  const [toySpeed, setToySpeed] = useState(0);
-  const [toyIntensity, setToyIntensity] = useState(0);
-  const [floatingReactions, setFloatingReactions] = useState<{id: string, type: string, x: number}[]>([]);
-  
   const playerRef = useRef<any>(null);
   const videoElementRef = useRef<HTMLDivElement | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const lastUpdateRef = useRef<number>(0);
-  const processedReactions = useRef<Set<string>>(new Set());
 
   // Auth check
   useEffect(() => {
@@ -84,24 +75,6 @@ export function WatchRoom() {
           playerRef.current.pause();
         }
       }
-
-      // Sync Toys
-      if (auth.currentUser?.uid !== roomData.hostId) {
-        if (roomData.toySpeed !== undefined) setToySpeed(roomData.toySpeed);
-        if (roomData.toyIntensity !== undefined) setToyIntensity(roomData.toyIntensity);
-      }
-
-      // Process new reactions
-      if (roomData.reactions) {
-        Object.entries(roomData.reactions).forEach(([id, reaction]) => {
-          if (!processedReactions.current.has(id)) {
-            processedReactions.current.add(id);
-            if (Date.now() - reaction.timestamp < 10000) { // Only show recent reactions
-               handleNewReaction(reaction.type);
-            }
-          }
-        });
-      }
     });
 
     const unsubscribeChat = roomService.subscribeToChat(roomId, setMessages);
@@ -111,36 +84,6 @@ export function WatchRoom() {
       unsubscribeChat();
     };
   }, [roomId]);
-
-  const handleNewReaction = (type: string) => {
-    const id = Math.random().toString();
-    const x = Math.random() * 80 + 10; // Random X position 10% to 90%
-    setFloatingReactions(prev => [...prev, { id, type, x }]);
-    setTimeout(() => {
-       setFloatingReactions(prev => prev.filter(r => r.id !== id));
-    }, 3000);
-  };
-
-  const handleSendReaction = (type: 'heart' | 'fire' | 'water' | 'egg') => {
-    if (!roomId) return;
-    roomService.sendReaction(roomId, type);
-  };
-
-  const handleToySpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value);
-    setToySpeed(val);
-    if (isHost && roomId) {
-      roomService.updateToyControl(roomId, val, toyIntensity);
-    }
-  };
-
-  const handleToyIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value);
-    setToyIntensity(val);
-    if (isHost && roomId) {
-      roomService.updateToyControl(roomId, toySpeed, val);
-    }
-  };
 
   // Fetch movie details
   useEffect(() => {
@@ -269,22 +212,6 @@ export function WatchRoom() {
       "flex flex-col lg:flex-row h-[calc(100vh-80px)] -mt-4 bg-zinc-950 overflow-hidden transition-colors duration-700",
       theaterMode && "fixed inset-0 z-50 h-screen mt-0 bg-black"
     )}>
-      {/* Container for Floating Reactions */}
-      <div className="absolute inset-0 pointer-events-none z-[100] overflow-hidden">
-        {floatingReactions.map((reaction) => (
-           <div 
-             key={reaction.id}
-             className="absolute bottom-20 text-4xl animate-float-up drop-shadow-[0_0_15px_rgba(244,63,94,0.5)]"
-             style={{ left: `${reaction.x}%` }}
-           >
-             {reaction.type === 'heart' && <Heart className="w-12 h-12 text-rose-500 fill-rose-500" />}
-             {reaction.type === 'fire' && <Flame className="w-12 h-12 text-orange-500 fill-orange-500" />}
-             {reaction.type === 'water' && <Droplets className="w-12 h-12 text-blue-400 fill-blue-400" />}
-             {reaction.type === 'egg' && <span className="text-4xl">🍆</span>}
-           </div>
-        ))}
-      </div>
-
       {/* Player Section */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <div className={cn(
@@ -362,69 +289,23 @@ export function WatchRoom() {
         </div>
       </div>
 
-      {/* Control & Chat Section */}
+      {/* Chat Section */}
       {!theaterMode && (
         <div className={cn(
-          "w-full lg:w-96 border-l border-zinc-800 bg-zinc-900/50 flex flex-col transition-all duration-300",
-          !showChat && "w-0 lg:w-0 overflow-hidden border-none"
+          "w-full lg:w-80 border-l border-zinc-800 bg-zinc-900/30 flex flex-col transition-all duration-300",
+          !showChat && "w-0 lg:w-0 overflow-hidden"
         )}>
           <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-white font-bold text-lg">
-              <MessageSquare className="w-5 h-5 text-rose-500" />
-              Tương tác
+            <div className="flex items-center gap-2 text-white font-bold">
+              <MessageSquare className="w-4 h-4 text-rose-500" />
+              Trò chuyện
             </div>
             <button onClick={() => setShowChat(false)} className="lg:hidden text-zinc-500 hover:text-white">
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Adult Toy Controls */}
-          <div className="p-4 border-b border-zinc-800 bg-rose-500/5">
-            <div className="flex items-center gap-2 mb-4 text-rose-500 font-bold">
-              <Activity className="w-5 h-5" />
-              Điều khiển Lovense / Đồ chơi
-              {!isHost && <span className="ml-auto text-xs whitespace-nowrap px-2 py-1 bg-zinc-800 rounded-full text-zinc-400">Đang đồng bộ host</span>}
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-xs text-zinc-400 mb-2 font-medium">
-                  <span>Tốc độ: {toySpeed}%</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0" max="100" 
-                  value={toySpeed}
-                  onChange={handleToySpeedChange}
-                  disabled={!isHost}
-                  className={cn(
-                    "w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer",
-                     toySpeed > 0 ? "accent-rose-500 bg-gradient-to-r from-rose-600 to-rose-400" : ""
-                  )}
-                />
-              </div>
-              
-              <div>
-                <div className="flex justify-between text-xs text-zinc-400 mb-2 font-medium">
-                  <span>Độ rung/Cường độ: {toyIntensity}%</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0" max="100" 
-                  value={toyIntensity}
-                  onChange={handleToyIntensityChange}
-                  disabled={!isHost}
-                  className={cn(
-                    "w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer",
-                     toyIntensity > 0 ? "accent-rose-500 bg-gradient-to-r from-rose-600 to-rose-400" : ""
-                  )}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-black/20">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
             {messages.map((msg) => (
               <div key={msg.id} className={cn("flex flex-col gap-1", msg.userId === user?.uid && "items-end")}>
                 <div className="flex items-center gap-2">
@@ -434,7 +315,7 @@ export function WatchRoom() {
                   "px-3 py-2 rounded-2xl text-sm max-w-[90%]",
                   msg.userId === user?.uid 
                     ? "bg-rose-600 text-white rounded-tr-none shadow-sm shadow-rose-500/20" 
-                    : "bg-zinc-800 text-zinc-300 rounded-tl-none border border-zinc-700/50"
+                    : "bg-zinc-800 text-zinc-300 rounded-tl-none"
                 )}>
                   {msg.text}
                 </div>
@@ -443,35 +324,18 @@ export function WatchRoom() {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Reaction Bar */}
-          <div className="p-3 border-t border-zinc-800 bg-zinc-900 flex justify-around gap-2">
-             <button onClick={() => handleSendReaction('heart')} className="p-2 hover:bg-zinc-800 rounded-full transition-colors group">
-                <Heart className="w-6 h-6 text-zinc-400 group-hover:text-rose-500 group-hover:fill-rose-500 transition-all group-hover:scale-125" />
-             </button>
-             <button onClick={() => handleSendReaction('fire')} className="p-2 hover:bg-zinc-800 rounded-full transition-colors group">
-                <Flame className="w-6 h-6 text-zinc-400 group-hover:text-orange-500 group-hover:fill-orange-500 transition-all group-hover:scale-125" />
-             </button>
-             <button onClick={() => handleSendReaction('water')} className="p-2 hover:bg-zinc-800 rounded-full transition-colors group">
-                <Droplets className="w-6 h-6 text-zinc-400 group-hover:text-blue-400 group-hover:fill-blue-400 transition-all group-hover:scale-125" />
-             </button>
-             <button onClick={() => handleSendReaction('egg')} className="p-2 hover:bg-zinc-800 rounded-full transition-colors group text-xl grayscale-[50%] group-hover:grayscale-0 hover:scale-125">
-                🍆
-             </button>
-          </div>
-
-          {/* Chat Input */}
-          <form onSubmit={handleSendMessage} className="p-4 border-t border-zinc-800 bg-zinc-950">
+          <form onSubmit={handleSendMessage} className="p-4 border-t border-zinc-800">
             <div className="relative">
               <input
                 type="text"
-                placeholder="Nhắn gì đó kích thích nào..."
+                placeholder="Nhắn gì đó..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 text-white text-sm rounded-xl pl-4 pr-12 py-3 focus:outline-none focus:border-rose-500 transition-colors shadow-inner"
+                className="w-full bg-zinc-800 border border-zinc-700 text-white text-sm rounded-full pl-4 pr-10 py-2.5 focus:outline-none focus:border-rose-500 transition-colors shadow-black/20"
               />
               <button 
                 type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-rose-600 text-white p-2 hover:bg-rose-500 rounded-lg transition-colors shadow-lg shadow-rose-500/20"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-500 p-1.5 hover:bg-rose-500/10 rounded-full transition-colors"
                 disabled={!chatInput.trim()}
               >
                 <Send className={cn("w-4 h-4", !chatInput.trim() && "opacity-50")} />
@@ -484,7 +348,7 @@ export function WatchRoom() {
       {!showChat && !theaterMode && (
         <button 
           onClick={() => setShowChat(true)}
-          className="fixed bottom-20 right-6 z-[60] bg-gradient-to-r from-rose-600 to-pink-600 text-white p-4 rounded-full shadow-lg shadow-rose-500/40 hover:scale-110 active:scale-95 transition-all lg:static lg:h-full lg:rounded-none lg:p-2 lg:border-l lg:border-zinc-800"
+          className="fixed bottom-20 right-6 z-[60] bg-rose-600 text-white p-4 rounded-full shadow-lg shadow-rose-500/20 hover:scale-110 active:scale-95 transition-all lg:static lg:h-full lg:rounded-none lg:bg-zinc-900 lg:p-2 lg:border-l lg:border-zinc-800"
         >
           <MessageSquare className="w-6 h-6" />
         </button>
@@ -509,4 +373,3 @@ const X = ({ className, ...props }: any) => (
     <path d="m6 6 12 12" />
   </svg>
 )
-
