@@ -28,6 +28,7 @@ export const SEO: React.FC<SEOProps> = ({
   const branding = "Xem phim online, Phim 18+ & Cosplay Nude";
   
   const fullTitle = absoluteTitle || (title ? `${title} | ${siteName}` : `${siteName} - ${branding}`);
+  const canonicalUrl = canonical || url;
 
   return (
     <Helmet>
@@ -38,7 +39,7 @@ export const SEO: React.FC<SEOProps> = ({
       <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
-      {canonical && <link rel="canonical" href={canonical} />}
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />

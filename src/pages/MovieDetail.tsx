@@ -245,6 +245,7 @@ export function MovieDetailPage() {
           keywords={generateKeywords(movie)}
           type="video.movie"
           schema={getMovieSchema(movie)}
+          canonical={`https://phimtop1.com/film/${slug}`}
         />
         {/* Player Section */}
         {activeEpisode && (

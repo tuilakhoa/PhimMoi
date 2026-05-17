@@ -396,12 +396,13 @@ async function startServer() {
     'quoc-gia-khac': 'Quốc gia khác'
   };
 
-  const injectMeta = (template: string, seo: { title: string, description: string, image?: string, keywords?: string, url?: string }) => {
+  const injectMeta = (template: string, seo: { title: string, description: string, image?: string, keywords?: string, url?: string, canonical?: string }) => {
     let output = template;
-    const { title, description, image = DEFAULT_IMAGE, keywords, url } = seo;
+    const { title, description, image = DEFAULT_IMAGE, keywords, url, canonical = url } = seo;
 
-    // Remove existing title and meta tags to avoid duplicates
+    // Remove existing title, meta tags, and canonical to avoid duplicates
     output = output.replace(/<title>.*?<\/title>/gi, '');
+    output = output.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/gi, '');
     
     const metaTagsToRemove = [
       'description', 'keywords', 'title',
@@ -417,6 +418,7 @@ async function startServer() {
     // Inject new tags before </head>
     const newTags = [
       `<title>${title}</title>`,
+      canonical ? `<link rel="canonical" href="${canonical}">` : '',
       `<meta name="title" content="${title}">`,
       `<meta name="description" content="${description}">`,
       `<meta name="keywords" content="${keywords || "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1"}">`,
@@ -429,7 +431,7 @@ async function startServer() {
       `<meta name="twitter:title" content="${title}">`,
       `<meta name="twitter:description" content="${description}">`,
       `<meta name="twitter:image" content="${image}">`
-    ];
+    ].filter(Boolean);
 
     output = output.replace(/<\/head>/i, `  ${newTags.join('\n  ')}\n</head>`);
 
@@ -557,7 +559,7 @@ async function startServer() {
       const url = req.path;
       let template = await getTemplate(req);
       
-      let seo: { title: string, description: string, keywords: string, image?: string, url?: string } = {
+      let seo: { title: string, description: string, keywords: string, image?: string, url?: string, canonical?: string } = {
         title: "PhimTop1 - Xem phim online, Phim 18+ & Cosplay Nude",
         description: "PhimTop1 - Nền tảng giải trí đa kênh: Xem phim online, phim người lớn 18+, JAV Vietsub và ảnh Cosplay Nude nghệ thuật. Chất lượng 4K, cập nhật mỗi ngày.",
         keywords: "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1",
