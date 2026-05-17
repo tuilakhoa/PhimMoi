@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { nguoncApi } from '../services/api';
 import { topxxApi } from '../services/topxxService';
 import { vsphimApi, xxvnApi } from '../services/adultService';
 import { cosplayService, CosplayAlbum } from '../services/cosplayService';
 import { MovieListResponse, Movie } from '../types';
 import { MovieCard } from '../components/MovieCard';
-import { Loader2, Zap, ChevronRight, Camera, MonitorPlay, Sparkles } from 'lucide-react';
+import { Loader2, Zap, ChevronRight, Camera, MonitorPlay, Sparkles, Calendar } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { storage } from '../lib/storage';
 import { useAge } from '../contexts/AgeContext';
+
+const YEARS = Array.from({ length: 2026 - 1990 + 1 }, (_, i) => 2026 - i);
 
 export function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -19,6 +21,7 @@ export function Home() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const { ageStatus } = useAge();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -147,15 +150,54 @@ export function Home() {
 
       {/* Unified Movies Section */}
       <section className="space-y-6 pt-4 border-t border-zinc-800/50">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-3xl font-black text-white flex items-center gap-3">
             <MonitorPlay className="w-8 h-8 text-indigo-500" />
             Khám phá Phim Mới
           </h2>
           {!loading && (
-            <div className="hidden sm:flex items-center gap-2 bg-zinc-900/50 px-3 py-1.5 rounded-full border border-zinc-800">
-               <Zap className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cập nhật mỗi phút</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <form 
+                className="flex items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const y = formData.get('year') as string;
+                  if (y && y.length === 4) {
+                    navigate(`/nam-phat-hanh/${y}`);
+                  }
+                }}
+              >
+                <Calendar className="w-4 h-4 text-zinc-400" />
+                <input
+                  type="number"
+                  name="year"
+                  list="year-options"
+                  placeholder="Nhập năm..."
+                  className="bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 rounded-lg px-3 py-2 outline-none focus:border-indigo-500/50 transition-colors w-32"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.currentTarget.form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    }
+                  }}
+                  onChange={(e) => {
+                    const y = e.target.value;
+                    if (y.length === 4) {
+                      navigate(`/nam-phat-hanh/${y}`);
+                    }
+                  }}
+                />
+                <datalist id="year-options">
+                  {YEARS.map(y => (
+                    <option key={y} value={y.toString()} />
+                  ))}
+                </datalist>
+              </form>
+
+              <div className="hidden sm:flex items-center gap-2 bg-zinc-900/50 px-3 py-1.5 rounded-full border border-zinc-800">
+                 <Zap className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cập nhật mỗi phút</span>
+              </div>
             </div>
           )}
         </div>

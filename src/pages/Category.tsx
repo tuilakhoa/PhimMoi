@@ -1,15 +1,18 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useParams, useSearchParams, useLocation } from 'react-router-dom';
+import { useParams, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { nguoncApi } from '../services/api';
 import { MovieListResponse } from '../types';
 import { MovieCard } from '../components/MovieCard';
-import { Loader2, ArrowUpDown } from 'lucide-react';
+import { Loader2, ArrowUpDown, Calendar } from 'lucide-react';
 import { SEO } from '../components/SEO';
+
+const YEARS = Array.from({ length: 2026 - 1990 + 1 }, (_, i) => 2026 - i);
 
 export function Category() {
   const { slug, year } = useParams<{ slug: string; year: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const page = parseInt(searchParams.get('page') || '1');
 
   const [data, setData] = useState<MovieListResponse | null>(null);
@@ -120,21 +123,63 @@ export function Category() {
           {title}
         </h1>
         
-        {data && data.items.length > 0 && (
-          <div className="flex items-center gap-2">
-            <ArrowUpDown className="w-4 h-4 text-zinc-400" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 rounded-lg px-3 py-2 outline-none focus:border-rose-500/50 transition-colors"
-            >
-              <option value="default">Sắp xếp mặc định</option>
-              <option value="year-desc">Năm: Gần nhất</option>
-              <option value="year-asc">Năm: Cũ nhất</option>
-              <option value="az">Tên: A - Z</option>
-            </select>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Year Filter */}
+          <form 
+            className="flex items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const y = formData.get('year') as string;
+              if (y && y.length === 4) {
+                navigate(`/nam-phat-hanh/${y}`);
+              }
+            }}
+          >
+            <Calendar className="w-4 h-4 text-zinc-400" />
+            <input
+              type="number"
+              name="year"
+              list="year-options"
+              defaultValue={year || ''}
+              placeholder="Nhập năm..."
+              className="bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 rounded-lg px-3 py-2 outline-none focus:border-rose-500/50 transition-colors w-32"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+              }}
+              onChange={(e) => {
+                const y = e.target.value;
+                if (y.length === 4) {
+                  navigate(`/nam-phat-hanh/${y}`);
+                }
+              }}
+            />
+            <datalist id="year-options">
+              {YEARS.map(y => (
+                <option key={y} value={y.toString()} />
+              ))}
+            </datalist>
+          </form>
+
+          {/* Sort Dropdown */}
+          {data && data.items.length > 0 && (
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="w-4 h-4 text-zinc-400" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 rounded-lg px-3 py-2 outline-none focus:border-rose-500/50 transition-colors"
+              >
+                <option value="default">Sắp xếp mặc định</option>
+                <option value="year-desc">Năm: Gần nhất</option>
+                <option value="year-asc">Năm: Cũ nhất</option>
+                <option value="az">Tên: A - Z</option>
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
       {loading ? (
