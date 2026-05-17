@@ -156,9 +156,9 @@ export function Home() {
             Khám phá Phim Mới
           </h2>
           {!loading && (
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <form 
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 flex-1 relative"
                 onSubmit={(e) => {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
@@ -168,25 +168,30 @@ export function Home() {
                   }
                 }}
               >
-                <Calendar className="w-4 h-4 text-zinc-400" />
-                <input
-                  type="number"
-                  name="year"
-                  list="year-options"
-                  placeholder="Nhập năm..."
-                  className="bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 rounded-lg px-3 py-2 outline-none focus:border-indigo-500/50 transition-colors w-32"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.currentTarget.form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                    }
-                  }}
-                  onChange={(e) => {
-                    const y = e.target.value;
-                    if (y.length === 4) {
-                      navigate(`/nam-phat-hanh/${y}`);
-                    }
-                  }}
-                />
+                <div className="relative flex-1 sm:w-36 flex items-center">
+                  <Calendar className="absolute left-3 w-4 h-4 text-zinc-400" />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    name="year"
+                    list="year-options"
+                    placeholder="Nhập năm..."
+                    className="w-full bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 text-sm text-zinc-300 rounded-lg pl-9 pr-3 py-2.5 outline-none focus:border-indigo-500/50 focus:bg-zinc-900 transition-all shadow-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.currentTarget.form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                      }
+                    }}
+                    onChange={(e) => {
+                      const y = e.target.value;
+                      if (y.length === 4) {
+                        navigate(`/nam-phat-hanh/${y}`);
+                      }
+                    }}
+                  />
+                </div>
                 <datalist id="year-options">
                   {YEARS.map(y => (
                     <option key={y} value={y.toString()} />
@@ -195,8 +200,8 @@ export function Home() {
               </form>
 
               <div className="hidden sm:flex items-center gap-2 bg-zinc-900/50 px-3 py-1.5 rounded-full border border-zinc-800">
-                 <Zap className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cập nhật mỗi phút</span>
+                 <Zap className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500 hover:animate-pulse" />
+                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none mt-0.5">Cập nhật mỗi phút</span>
               </div>
             </div>
           )}

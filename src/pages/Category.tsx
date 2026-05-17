@@ -123,10 +123,10 @@ export function Category() {
           {title}
         </h1>
         
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto mt-4 sm:mt-0">
           {/* Year Filter */}
           <form 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-1 sm:flex-none relative"
             onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
@@ -136,26 +136,31 @@ export function Category() {
               }
             }}
           >
-            <Calendar className="w-4 h-4 text-zinc-400" />
-            <input
-              type="number"
-              name="year"
-              list="year-options"
-              defaultValue={year || ''}
-              placeholder="Nhập năm..."
-              className="bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 rounded-lg px-3 py-2 outline-none focus:border-rose-500/50 transition-colors w-32"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.currentTarget.form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                }
-              }}
-              onChange={(e) => {
-                const y = e.target.value;
-                if (y.length === 4) {
-                  navigate(`/nam-phat-hanh/${y}`);
-                }
-              }}
-            />
+            <div className="relative flex-1 sm:w-36 flex items-center">
+              <Calendar className="absolute left-3 w-4 h-4 text-zinc-400" />
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                name="year"
+                list="year-options"
+                defaultValue={year || ''}
+                placeholder="Nhập năm..."
+                className="w-full bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 text-sm text-zinc-300 rounded-lg pl-9 pr-3 py-2.5 outline-none focus:border-rose-500/50 focus:bg-zinc-900 transition-all shadow-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                  }
+                }}
+                onChange={(e) => {
+                  const y = e.target.value;
+                  if (y.length === 4) {
+                    navigate(`/nam-phat-hanh/${y}`);
+                  }
+                }}
+              />
+            </div>
             <datalist id="year-options">
               {YEARS.map(y => (
                 <option key={y} value={y.toString()} />
@@ -165,18 +170,19 @@ export function Category() {
 
           {/* Sort Dropdown */}
           {data && data.items.length > 0 && (
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="w-4 h-4 text-zinc-400" />
+            <div className="relative flex-1 sm:flex-none flex items-center">
+              <ArrowUpDown className="absolute left-3 w-4 h-4 text-zinc-400" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 rounded-lg px-3 py-2 outline-none focus:border-rose-500/50 transition-colors"
+                className="w-full sm:w-auto bg-zinc-900/80 appearance-none border border-zinc-800 hover:border-zinc-700 text-sm text-zinc-300 rounded-lg pl-9 pr-8 py-2.5 outline-none focus:border-rose-500/50 focus:bg-zinc-900 transition-all shadow-sm cursor-pointer"
               >
-                <option value="default">Sắp xếp mặc định</option>
-                <option value="year-desc">Năm: Gần nhất</option>
-                <option value="year-asc">Năm: Cũ nhất</option>
-                <option value="az">Tên: A - Z</option>
+                <option value="default">Mặc định</option>
+                <option value="year-desc">Gần nhất</option>
+                <option value="year-asc">Cũ nhất</option>
+                <option value="az">A - Z</option>
               </select>
+              <div className="absolute right-3 pointer-events-none text-zinc-500 text-xs">▼</div>
             </div>
           )}
         </div>
