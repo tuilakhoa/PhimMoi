@@ -81,9 +81,9 @@ export function Home() {
   return (
     <div className="space-y-12 animate-in fade-in duration-500">
       <SEO 
-        title="Trang chủ" 
-        description="PhimTop1 - Tổng hợp phim điện ảnh mới, phim người lớn 18+ và album ảnh Cosplay Nude nghệ thuật. Giải trí đa kênh, mượt mà, chất lượng 4K."
-        keywords="phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3"
+        absoluteTitle="PhimTop1 - Xem phim online, Phim 18+ & Cosplay Nude" 
+        description="Xem phim online, phim người lớn 18+, JAV Vietsub và ảnh Cosplay Nude nghệ thuật chất lượng cao. PhimTop1 - Nền tảng giải trí đa kênh, mượt mà, chất lượng 4K."
+        keywords="phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1"
       />
       
       {/* Personalized Recommendations */}

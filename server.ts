@@ -343,12 +343,48 @@ async function startServer() {
     // Do NOT app.use(vite.middlewares) yet, because we need to intercept index.html requests
   }
 
-  // Intercept requests for movie details and inject meta tags
+  // --- Dynamic SEO Injection ---
+
+  const injectMeta = (template: string, seo: { title: string, description: string, image?: string, keywords?: string, url?: string }) => {
+    let output = template;
+    const { title, description, image = DEFAULT_IMAGE, keywords, url } = seo;
+
+    output = output.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
+    output = output.replace(/<meta\s+name="title"\s+content="[^"]*"\s*\/?>/i, `<meta name="title" content="${title}">`);
+    output = output.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${description}">`);
+    output = output.replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${title}">`);
+    output = output.replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${description}">`);
+    
+    if (image) {
+      output = output.replace(/<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${image}">`);
+      output = output.replace(/<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:image" content="${image}">`);
+    }
+
+    if (keywords) {
+      output = output.replace(/<meta\s+name="keywords"\s+content="[^"]*"\s*\/?>/i, `<meta name="keywords" content="${keywords}">`);
+    }
+
+    output = output.replace(/<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${title}">`);
+    output = output.replace(/<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${description}">`);
+
+    return output;
+  };
+
+  const getTemplate = async (req: express.Request) => {
+    let template = '';
+    if (process.env.NODE_ENV !== "production") {
+      template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+      template = await vite.transformIndexHtml(req.originalUrl, template);
+    } else {
+      template = fs.readFileSync(path.resolve(process.cwd(), 'dist/index.html'), 'utf-8');
+    }
+    return template;
+  };
+
+  // Movie Details Route
   app.get('/film/:slug', async (req, res, next) => {
     try {
       const slug = req.params.slug;
-      
-      // Fetch movie detail from appropriate API for SEO
       let movieData: any = null;
       try {
         if (slug.startsWith('tx-')) {
@@ -413,16 +449,8 @@ async function startServer() {
         console.error("Failed to fetch movie data for SEO:", err);
       }
 
-      // Read html template
-      let template = '';
-      if (process.env.NODE_ENV !== "production") {
-        template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
-        template = await vite.transformIndexHtml(req.originalUrl, template);
-      } else {
-        template = fs.readFileSync(path.resolve(process.cwd(), 'dist/index.html'), 'utf-8');
-      }
+      let template = await getTemplate(req);
 
-      // If we have movie data, replace the meta tags
       if (movieData) {
         const title = `Xem phim ${movieData.name || ''} (${movieData.origin_name || ''}) Vietsub Thuyết minh mới nhất | PhimTop1`;
         const descriptionRaw = movieData.content || movieData.description || '';
@@ -436,62 +464,76 @@ async function startServer() {
           thumb = movieData.thumb_url.startsWith('http') ? movieData.thumb_url : `${domainImage}/uploads/movies/${movieData.thumb_url}`;
         }
 
-        // Keywords
         const genreKeywords = (movieData.category || []).map((c: any) => c.name).join(', ');
         const keywords = `xem phim, xem phim online, phim hay, phim vietsub, phim thuyết minh, ${movieData.name || ''}, ${movieData.origin_name || ''}, ${genreKeywords}`;
 
-        template = template.replace(
-          /<title>.*?<\/title>/i, 
-          `<title>${title}</title>`
-        );
-        template = template.replace(
-          /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, 
-          `<meta name="description" content="${description}">`
-        );
-        template = template.replace(
-          /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, 
-          `<meta property="og:title" content="${title}">`
-        );
-        template = template.replace(
-          /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, 
-          `<meta property="og:description" content="${description}">`
-        );
-        
-        // Add image tags
-        template = template.replace(
-          /<\/head>/,
-          `<meta property="og:image" content="${thumb}">
-    <meta name="keywords" content="${keywords}">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${title}">
-    <meta name="twitter:description" content="${description}">
-    <meta name="twitter:image" content="${thumb}">
-  </head>`
-        );
+        template = injectMeta(template, { title, description, image: thumb, keywords });
       }
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
     } catch (e: any) {
-      if (vite) {
-        vite.ssrFixStacktrace(e);
-      }
-      console.log(e.stack);
+      if (vite) vite.ssrFixStacktrace(e);
       next(e);
     }
   });
 
-  // Then apply Vite middleware for all other requests
+  // Catch-all with Static Route SEO
+  app.get('*', async (req, res, next) => {
+    // Only intercept HTML requests
+    if (req.path.includes('.') && !req.path.endsWith('.html')) return next();
+    
+    try {
+      const url = req.path;
+      let template = await getTemplate(req);
+      
+      let seo: { title: string, description: string, keywords: string, image?: string } = {
+        title: "PhimTop1 - Xem phim online, Phim 18+ & Cosplay Nude",
+        description: "PhimTop1 - Nền tảng giải trí đa kênh: Xem phim online, phim người lớn 18+, JAV Vietsub và ảnh Cosplay Nude nghệ thuật. Chất lượng 4K, cập nhật mỗi ngày.",
+        keywords: "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1"
+      };
+
+      if (url === '/') {
+        // Already default
+      } else if (url.includes('/nguoi-lon/cosplay/')) {
+        const id = url.split('/').pop();
+        try {
+          const apiRes = await fetch(`https://cosplaytele.com/wp-json/wp/v2/posts/${id}`);
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            seo.title = `${data.title.rendered} - Album Cosplay Nude Nóng Bỏng | PhimTop1`;
+            seo.description = `Xem bộ ảnh ${data.title.rendered} chất lượng cao, cosplay nude nghệ thuật cực phê tại PhimTop1.`;
+            seo.image = data.jetpack_featured_media_url || DEFAULT_IMAGE;
+          }
+        } catch (e) {}
+      } else if (url.startsWith('/the-loai/') || url.startsWith('/quoc-gia/')) {
+        const parts = url.split('/');
+        const category = parts[parts.length - 1];
+        seo.title = `Danh sách phim ${category} mới nhất | PhimTop1`;
+        seo.description = `Tổng hợp phim ${category} hay nhất, cập nhật liên tục với chất lượng cao tại PhimTop1.`;
+      } else if (url === '/nguoi-lon/cosplay') {
+        seo.title = "Cosplay Nude - Album Ảnh Nóng Show Hàng Nghệ Thuật | PhimTop1";
+        seo.description = "Bộ sưu tập album ảnh cosplay nude, show hàng, ảnh nóng nghệ thuật từ các hot girl, model nổi tiếng nhất.";
+      } else if (url === '/kham-pha') {
+        seo.title = "Khám Phá Phim Hay - Gợi Ý Xem Phim Cho Bạn | PhimTop1";
+      }
+
+      template = injectMeta(template, seo);
+      res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+    } catch (e: any) {
+      if (vite) vite.ssrFixStacktrace(e);
+      next(e);
+    }
+  });
+
   if (process.env.NODE_ENV !== "production") {
     app.use(vite.middlewares);
   } else {
     // Serve static files from dist
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath, { index: false })); // Don't serve index.html automatically here, let the catch-all handle it
+    app.use(express.static(distPath, { index: false }));
     
-    // Catch-all for SPA router (non-movie pages)
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    // Catch-all for SPA router - should not be needed because we have app.get('*') above
+    // but we can leave it for safety or just rely on the above
   }
 
   app.listen(PORT, "0.0.0.0", () => {

@@ -2,7 +2,8 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 interface SEOProps {
-  title: string;
+  title?: string;
+  absoluteTitle?: string;
   description?: string;
   image?: string;
   url?: string;
@@ -13,7 +14,8 @@ interface SEOProps {
 }
 
 export const SEO: React.FC<SEOProps> = ({ 
-  title, 
+  title,
+  absoluteTitle,
   description = "Xem phim online, phim người lớn 18+, JAV Vietsub và ảnh Cosplay Nude nghệ thuật chất lượng cao. Nền tảng giải trí đa thể loại cập nhật liên tục.", 
   image = "https://phim.nguonc.com/public/images/Film/kwPN5eeCEcEh347j7aW8BudNVF4.jpg", // Default fallback image from NguonC
   url = typeof window !== 'undefined' ? window.location.href : '',
@@ -23,7 +25,9 @@ export const SEO: React.FC<SEOProps> = ({
   canonical
 }) => {
   const siteName = "PhimTop1";
-  const fullTitle = `${title} | ${siteName}`;
+  const branding = "Xem phim online, Phim 18+ & Cosplay Nude";
+  
+  const fullTitle = absoluteTitle || (title ? `${title} | ${siteName}` : `${siteName} - ${branding}`);
 
   return (
     <Helmet>
