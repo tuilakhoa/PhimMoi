@@ -2,6 +2,10 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/api/ophim-movies/(.*)",
+      "destination": "/api/ophim-proxy?path=$1"
+    },
+    {
       "source": "/api/cosplay/(.*)",
       "destination": "/api/cosplay-proxy?path=$1"
     },

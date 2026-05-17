@@ -18,7 +18,8 @@ import {
   Settings, 
   LogOut,
   Loader2,
-  Tv
+  Tv,
+  Moon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import videojs from 'video.js';
@@ -35,6 +36,7 @@ export function WatchRoom() {
   const [loading, setLoading] = useState(true);
   const [showChat, setShowChat] = useState(true);
   const [isHost, setIsHost] = useState(false);
+  const [theaterMode, setTheaterMode] = useState(false);
   
   const playerRef = useRef<any>(null);
   const videoElementRef = useRef<HTMLDivElement | null>(null);
@@ -206,10 +208,16 @@ export function WatchRoom() {
   const activeEp = movie.episodes.flatMap(s => s.items).find(i => i.slug === room.activeEpisodeSlug);
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] -mt-4 bg-zinc-950 overflow-hidden">
+    <div className={cn(
+      "flex flex-col lg:flex-row h-[calc(100vh-80px)] -mt-4 bg-zinc-950 overflow-hidden transition-colors duration-700",
+      theaterMode && "fixed inset-0 z-50 h-screen mt-0 bg-black"
+    )}>
       {/* Player Section */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="p-4 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <div className={cn(
+          "p-4 flex items-center justify-between border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md transition-opacity duration-300",
+          theaterMode && "opacity-0 hover:opacity-100 absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/80 to-transparent border-none"
+        )}>
           <div className="flex items-center gap-4">
             <h1 className="text-lg font-bold text-white max-w-[200px] truncate">{room.name}</h1>
             <div className="h-4 w-px bg-zinc-700"></div>
@@ -219,6 +227,16 @@ export function WatchRoom() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+             <button
+               onClick={() => setTheaterMode(!theaterMode)}
+               className={cn(
+                 "p-2 rounded-full transition-colors",
+                 theaterMode ? "text-yellow-400 bg-yellow-400/10" : "text-zinc-400 hover:text-white"
+               )}
+               title={theaterMode ? "Bật đèn" : "Tắt đèn"}
+             >
+               <Moon className="w-5 h-5" />
+             </button>
              <div className="flex -space-x-2 mr-2">
                 {Object.values(room.users).slice(0, 3).map((u: any, i) => (
                   <div key={i} className="w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-950 flex items-center justify-center text-[10px] text-white font-bold" title={u.nickname}>
@@ -241,7 +259,10 @@ export function WatchRoom() {
           </div>
         </div>
 
-        <div className="flex-1 bg-black flex items-center justify-center relative group">
+        <div className={cn(
+          "flex-1 bg-black flex items-center justify-center relative group transition-all duration-700",
+          !theaterMode && room.playbackState === 'playing' ? "[box-shadow:0_0_80px_-20px_rgba(244,63,94,0.15)]" : ""
+        )}>
           {activeEp?.m3u8 ? (
             <div ref={videoElementRef} className="w-full h-full" />
           ) : (
@@ -260,7 +281,7 @@ export function WatchRoom() {
           )}
           {!isHost && activeEp?.m3u8 && (
             <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="bg-black/80 px-4 py-2 rounded-full text-xs text-rose-500 font-bold border border-rose-500/30">
+              <div className="bg-black/80 px-4 py-2 rounded-full text-xs text-rose-500 font-bold border border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.3)]">
                 Host đang điều khiển - Playback đang được đồng bộ
               </div>
             </div>
@@ -269,62 +290,65 @@ export function WatchRoom() {
       </div>
 
       {/* Chat Section */}
-      <div className={cn(
-        "w-full lg:w-80 border-l border-zinc-800 bg-zinc-900/30 flex flex-col transition-all duration-300",
-        !showChat && "w-0 lg:w-0 overflow-hidden"
-      )}>
-        <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-white font-bold">
-            <MessageSquare className="w-4 h-4 text-rose-500" />
-            Trò chuyện
-          </div>
-          <button onClick={() => setShowChat(false)} className="lg:hidden text-zinc-500 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-          {messages.map((msg) => (
-            <div key={msg.id} className={cn("flex flex-col gap-1", msg.userId === user?.uid && "items-end")}>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-zinc-500">{msg.userName}</span>
-              </div>
-              <div className={cn(
-                "px-3 py-2 rounded-2xl text-sm max-w-[90%]",
-                msg.userId === user?.uid 
-                  ? "bg-rose-600 text-white rounded-tr-none" 
-                  : "bg-zinc-800 text-zinc-300 rounded-tl-none"
-              )}>
-                {msg.text}
-              </div>
+      {!theaterMode && (
+        <div className={cn(
+          "w-full lg:w-80 border-l border-zinc-800 bg-zinc-900/30 flex flex-col transition-all duration-300",
+          !showChat && "w-0 lg:w-0 overflow-hidden"
+        )}>
+          <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-white font-bold">
+              <MessageSquare className="w-4 h-4 text-rose-500" />
+              Trò chuyện
             </div>
-          ))}
-          <div ref={chatEndRef} />
-        </div>
-
-        <form onSubmit={handleSendMessage} className="p-4 border-t border-zinc-800">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Nhắn gì đó..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 text-white text-sm rounded-full pl-4 pr-10 py-2.5 focus:outline-none focus:border-rose-500 transition-colors"
-            />
-            <button 
-              type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-500 p-1.5 hover:bg-rose-500/10 rounded-full transition-colors"
-            >
-              <Send className="w-4 h-4" />
+            <button onClick={() => setShowChat(false)} className="lg:hidden text-zinc-500 hover:text-white">
+              <X className="w-5 h-5" />
             </button>
           </div>
-        </form>
-      </div>
 
-      {!showChat && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            {messages.map((msg) => (
+              <div key={msg.id} className={cn("flex flex-col gap-1", msg.userId === user?.uid && "items-end")}>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-zinc-500">{msg.userName}</span>
+                </div>
+                <div className={cn(
+                  "px-3 py-2 rounded-2xl text-sm max-w-[90%]",
+                  msg.userId === user?.uid 
+                    ? "bg-rose-600 text-white rounded-tr-none shadow-sm shadow-rose-500/20" 
+                    : "bg-zinc-800 text-zinc-300 rounded-tl-none"
+                )}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+
+          <form onSubmit={handleSendMessage} className="p-4 border-t border-zinc-800">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Nhắn gì đó..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="w-full bg-zinc-800 border border-zinc-700 text-white text-sm rounded-full pl-4 pr-10 py-2.5 focus:outline-none focus:border-rose-500 transition-colors shadow-black/20"
+              />
+              <button 
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-500 p-1.5 hover:bg-rose-500/10 rounded-full transition-colors"
+                disabled={!chatInput.trim()}
+              >
+                <Send className={cn("w-4 h-4", !chatInput.trim() && "opacity-50")} />
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {!showChat && !theaterMode && (
         <button 
           onClick={() => setShowChat(true)}
-          className="fixed bottom-20 right-6 z-[60] bg-rose-600 text-white p-4 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all lg:static lg:h-full lg:rounded-none lg:bg-zinc-900 lg:p-2 lg:border-l lg:border-zinc-800"
+          className="fixed bottom-20 right-6 z-[60] bg-rose-600 text-white p-4 rounded-full shadow-lg shadow-rose-500/20 hover:scale-110 active:scale-95 transition-all lg:static lg:h-full lg:rounded-none lg:bg-zinc-900 lg:p-2 lg:border-l lg:border-zinc-800"
         >
           <MessageSquare className="w-6 h-6" />
         </button>

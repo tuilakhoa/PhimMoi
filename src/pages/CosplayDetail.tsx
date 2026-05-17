@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { cosplayService, CosplayAlbum } from '../services/cosplayService';
-import { Loader2, ArrowLeft, Camera, User, Heart, Calendar, Image } from 'lucide-react';
+import { Loader2, ArrowLeft, Camera, User, Heart, Calendar, Image, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { AgeBlock } from '../components/AgeBlock';
+import { cn } from '../lib/utils';
 
 export function CosplayDetail() {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,8 @@ export function CosplayDetail() {
   const [album, setAlbum] = useState<CosplayAlbum | null>(null);
   const [totalAlbums, setTotalAlbums] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const getAlbumSchema = (album: CosplayAlbum) => {
     return {
@@ -48,6 +51,17 @@ export function CosplayDetail() {
     fetchDetail();
     window.scrollTo(0, 0);
   }, [id]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (lightboxIndex === null) return;
+      if (e.key === 'Escape') setLightboxIndex(null);
+      if (e.key === 'ArrowRight') setLightboxIndex(prev => prev !== null && album ? (prev + 1) % album.images.length : null);
+      if (e.key === 'ArrowLeft') setLightboxIndex(prev => prev !== null && album ? (prev - 1 + album.images.length) % album.images.length : null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex, album]);
 
   if (isLoading) {
     return (
@@ -129,24 +143,63 @@ export function CosplayDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
           {album.images.map((img, idx) => (
-            <div key={idx} className="group overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 relative">
+            <div key={idx} className="group overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 relative break-inside-avoid">
               <img 
                 src={img} 
                 alt={`${album.title} - Ảnh ${idx + 1}`} 
-                className="w-full h-auto object-cover md:aspect-[3/4]"
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm cursor-pointer"
-                   onClick={() => window.open(img, '_blank')}>
-                   <Camera className="w-8 h-8 text-white/50" />
+                   onClick={() => setLightboxIndex(idx)}>
+                   <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
               </div>
             </div>
           ))}
         </div>
       </div>
       </div>
+      
+      {/* Lightbox Overlay */}
+      {lightboxIndex !== null && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center backdrop-blur-md animate-in fade-in duration-300">
+          <button 
+            className="absolute top-6 right-6 p-3 bg-zinc-900/50 hover:bg-rose-500 rounded-full transition-colors text-white z-[110]"
+            onClick={() => setLightboxIndex(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          <button 
+            className="absolute left-6 top-1/2 -translate-y-1/2 p-4 bg-zinc-900/50 hover:bg-rose-500 rounded-full transition-colors text-white z-[110]"
+            onClick={() => setLightboxIndex((lightboxIndex - 1 + album.images.length) % album.images.length)}
+          >
+            <ChevronLeft className="w-8 h-8" />
+          </button>
+          
+          <div className="relative w-full h-full p-4 md:p-12 flex items-center justify-center pointer-events-none">
+            <img 
+              src={album.images[lightboxIndex]} 
+              alt="Lightbox" 
+              className="max-w-full max-h-full object-contain pointer-events-auto select-none rounded-md shadow-2xl"
+              onClick={() => setLightboxIndex((lightboxIndex + 1) % album.images.length)}
+            />
+          </div>
+          
+          <button 
+            className="absolute right-6 top-1/2 -translate-y-1/2 p-4 bg-zinc-900/50 hover:bg-rose-500 rounded-full transition-colors text-white z-[110]"
+            onClick={() => setLightboxIndex((lightboxIndex + 1) % album.images.length)}
+          >
+            <ChevronRight className="w-8 h-8" />
+          </button>
+          
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-zinc-900/80 rounded-full border border-zinc-800 text-white font-medium text-sm z-[110]">
+            {lightboxIndex + 1} / {album.images.length}
+          </div>
+        </div>
+      )}
     </AgeBlock>
   );
 }

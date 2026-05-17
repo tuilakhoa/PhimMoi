@@ -3,7 +3,7 @@ import { topxxApi } from '../services/topxxService';
 import { vsphimApi, xxvnApi } from '../services/adultService';
 import { Movie } from '../types';
 import { MovieCard } from '../components/MovieCard';
-import { Loader2, Zap, ChevronLeft, ChevronRight, Server } from 'lucide-react';
+import { Loader2, Zap, Server, Sparkles } from 'lucide-react';
 import { SEO } from '../components/SEO';
 
 import { AgeBlock } from '../components/AgeBlock';
@@ -36,6 +36,7 @@ const COUNTRIES = [
 export function AdultPage() {
   const [data, setData] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedCountry, setSelectedCountry] = useState<string | undefined>(undefined);
@@ -76,7 +77,8 @@ export function AdultPage() {
 
   useEffect(() => {
     const fetchMovies = async () => {
-      setLoading(true);
+      if (page === 1) setLoading(true);
+      else setLoadingMore(true);
       try {
         let res;
         if (provider === 'topxx') {
@@ -94,33 +96,36 @@ export function AdultPage() {
           res = await vsphimApi.getNewMovies(page, selectedCategory, selectedCountry);
         }
         
-        setData(res.items);
+        setData(prev => page === 1 ? res.items : [...prev, ...res.items]);
         if (res.paginate) {
-           setTotalPages(res.paginate.total_page);
+           setTotalPages(res.paginate.total_page || 100);
         }
       } catch (error) {
         console.error('Failed to fetch adult movies:', error);
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
     };
     fetchMovies();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [page, selectedCountry, selectedCategory, provider]);
 
   const handleCountryChange = (countryCode: string | undefined) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setSelectedCountry(countryCode);
     setSelectedCategory(undefined);
     setPage(1);
   };
 
   const handleCategoryChange = (categoryId: string | undefined) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setSelectedCategory(categoryId);
     setSelectedCountry(undefined);
     setPage(1);
   };
 
   const handleProviderChange = (newProvider: string) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setProvider(newProvider);
     setPage(1);
     setSelectedCategory(undefined);
@@ -134,18 +139,18 @@ export function AdultPage() {
       
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Zap className="w-6 h-6 text-rose-500 fill-rose-500" />
+          <h1 className="text-2xl md:text-3xl font-black text-white flex items-center gap-2">
+            <Zap className="w-6 h-6 md:w-8 md:h-8 text-rose-500 fill-rose-500" />
             Phim Người Lớn 18+
           </h1>
           
-          <div className="flex items-center gap-2 bg-zinc-900 overflow-x-auto custom-scrollbar rounded-xl p-1">
+          <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 overflow-x-auto custom-scrollbar rounded-xl p-1 shadow-lg">
             <Server className="w-4 h-4 text-zinc-500 ml-2" />
             {PROVIDERS.map((prov) => (
               <button
                 key={prov.id}
                 onClick={() => handleProviderChange(prov.id)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
                   provider === prov.id
                     ? 'bg-rose-600 text-white shadow-md'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -157,17 +162,17 @@ export function AdultPage() {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Categories list */}
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.name}
                 onClick={() => handleCategoryChange(cat.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
                   selectedCategory === cat.id
-                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20'
-                    : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20 translate-y-[-1px]'
+                    : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white hover:border-zinc-700'
                 }`}
                 disabled={provider === 'xxvn' && cat.id !== undefined}
                 title={provider === 'xxvn' ? 'XXVN chưa hỗ trợ bộ lọc trực tiếp' : ''}
@@ -183,10 +188,10 @@ export function AdultPage() {
               <button
                 key={ct.name}
                 onClick={() => handleCountryChange(ct.code)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
                   selectedCountry === ct.code
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                    : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 translate-y-[-1px]'
+                    : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white hover:border-zinc-700'
                 }`}
                 disabled={provider === 'xxvn' && ct.code !== undefined}
                 title={provider === 'xxvn' ? 'XXVN chưa hỗ trợ bộ lọc trực tiếp' : ''}
@@ -198,37 +203,42 @@ export function AdultPage() {
         </div>
       </div>
 
-      {loading ? (
+      {loading && page === 1 ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="w-8 h-8 text-rose-500 animate-spin" />
         </div>
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {data.map((movie) => (
-              <MovieCard key={movie.slug} movie={movie} />
+            {data.map((movie, idx) => (
+              <MovieCard key={`${movie.slug}-${idx}`} movie={movie} />
             ))}
           </div>
 
-          <div className="flex justify-center items-center gap-4 pt-8">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-2 bg-zinc-900 border border-zinc-700 rounded-md disabled:opacity-30 hover:bg-zinc-800 transition-colors text-white"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="text-zinc-400 font-medium">
-              Trang {page} / {totalPages}
-            </span>
-            <button
-              onClick={() => setPage(p => p + 1)}
-              disabled={page >= totalPages}
-              className="p-2 bg-zinc-900 border border-zinc-700 rounded-md disabled:opacity-30 hover:bg-zinc-800 transition-colors text-white"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+          {page < totalPages && (
+            <div className="mt-12 flex justify-center">
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={loadingMore}
+                className="group relative px-8 py-3.5 bg-zinc-900 border border-zinc-800 rounded-full text-white font-medium hover:bg-zinc-800 hover:border-zinc-700 hover:shadow-[0_0_30px_-5px_rgba(244,63,94,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden shadow-xl"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-rose-500/0 via-rose-500/10 to-rose-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                <div className="relative flex items-center gap-2">
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin text-rose-500" />
+                      Đang tải thêm...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 text-rose-500 group-hover:scale-110 transition-transform" />
+                      Tải thêm phim
+                    </>
+                  )}
+                </div>
+              </button>
+            </div>
+          )}
         </>
       )}
       </div>

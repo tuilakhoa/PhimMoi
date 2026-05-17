@@ -1,6 +1,6 @@
 import { MovieListResponse, MovieDetailResponse, Movie } from '../types';
 
-const API_BASE = 'https://ophim1.com/v1/api';
+const API_BASE = '/api/ophim-movies';
 
 const mapOphimMovie = (item: any, domainImage: string): Movie => ({
   name: item.name || '',
