@@ -359,7 +359,7 @@ Sitemap: https://phimtop1.asia/sitemap.xml`);
     try {
       const { getMovieSlugsTotalPages, generateSitemapIndexXml } = await import('./src/services/sitemapService.js');
       
-      const ITEMS_PER_SITEMAP = 10000;
+      const ITEMS_PER_SITEMAP = 5000;
       const totalPages = await getMovieSlugsTotalPages(ITEMS_PER_SITEMAP);
       
       const sitemaps = [
@@ -395,7 +395,7 @@ Sitemap: https://phimtop1.asia/sitemap.xml`);
       const { getMovieSlugsForSitemap, generateSitemapXml } = await import('./src/services/sitemapService.js');
       const page = req.params.page;
       
-      const ITEMS_PER_SITEMAP = 10000;
+      const ITEMS_PER_SITEMAP = 5000;
       const slugs = await getMovieSlugsForSitemap(page, ITEMS_PER_SITEMAP);
 
       const now = new Date().toISOString();
