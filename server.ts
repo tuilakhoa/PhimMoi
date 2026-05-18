@@ -450,9 +450,11 @@ async function startServer() {
   };
 
   // Movie Details Route
-  app.get('/film/:slug', async (req, res, next) => {
+  app.get(['/film/:slug', '/xem-phim/:slug', '/xem-phim/:slug/:episodeSlug'], async (req, res, next) => {
     try {
       const slug = req.params.slug;
+      const episodeSlug = req.params.episodeSlug;
+      const isWatchPage = req.originalUrl.includes('/xem-phim');
       let movieData: any = null;
       try {
         if (slug.startsWith('tx-')) {
@@ -470,7 +472,8 @@ async function startServer() {
                 poster_url: item.images?.[0]?.path || item.thumbnail,
                 category: item.genres?.map((g: any) => ({ 
                   name: g.trans?.find((t: any) => t.locale === 'vi')?.name || g.trans?.[0]?.name 
-                }))
+                })),
+                episodes: item.episodes
               };
             }
           }
@@ -485,7 +488,8 @@ async function startServer() {
                 name: item.name,
                 origin_name: item.origin_name,
                 content: item.content,
-                poster_url: item.thumb_url || item.poster_url
+                poster_url: item.thumb_url || item.poster_url,
+                episodes: item.episodes
               };
             }
           }
@@ -500,7 +504,8 @@ async function startServer() {
                 name: item.name,
                 origin_name: item.origin_name,
                 content: item.content,
-                poster_url: item.thumb_url || item.poster_url
+                poster_url: item.thumb_url || item.poster_url,
+                episodes: item.episodes
               };
             }
           }
@@ -519,9 +524,28 @@ async function startServer() {
 
       let template = await getTemplate(req);
 
-      const title = movieData 
-        ? `Xem phim ${movieData.name || ''} (${movieData.origin_name || ''}) Vietsub Thuyết minh mới nhất | PhimTop1`
-        : "Xem phim online mới nhất chất lượng 4K | PhimTop1";
+      let episodeName = '';
+      if (isWatchPage && movieData?.episodes) {
+         for (const server of movieData.episodes || []) {
+            const items = server.server_data || server.items || [];
+            const found = items.find((ep: any) => ep.slug === episodeSlug) || items[0];
+            if (found) {
+               episodeName = found.name;
+               break;
+            }
+         }
+      }
+
+      let title = '';
+      if (isWatchPage) {
+         title = movieData
+           ? `Xem phim ${movieData.name || ''} (${movieData.origin_name || ''})${episodeName ? ` - Tập ${episodeName}` : ''} Vietsub Thuyết minh mới nhất`
+           : "Xem phim online mới nhất chất lượng 4K | PhimTop1";
+      } else {
+         title = movieData 
+           ? `Thông tin phim ${movieData.name || ''} (${movieData.origin_name || ''}) Vietsub Thuyết minh mới nhất | PhimTop1`
+           : "Xem phim online mới nhất chất lượng 4K | PhimTop1";
+      }
       
       const descriptionRaw = movieData ? (movieData.content || movieData.description || '') : "Tổng hợp phim mới nhất, phim hành động, tình cảm, phim 18+ JAV Vietsub cực hay.";
       const description = descriptionRaw.replace(/<[^>]+>/g, '').trim().substring(0, 160) + '...';
@@ -537,11 +561,19 @@ async function startServer() {
       }
 
       const genreKeywords = (movieData?.category || []).map((c: any) => c.name).join(', ');
-      const keywords = movieData 
+      let keywords = movieData 
         ? `xem phim, xem phim online, phim hay, phim vietsub, phim thuyết minh, ${movieData.name || ''}, ${movieData.origin_name || ''}, ${genreKeywords}`
         : "xem phim, xem phim online, phim moi, phim hay, phimtop1";
+      
+      if (isWatchPage && episodeName) {
+        keywords += `, tập ${episodeName}`;
+      }
 
-      template = injectMeta(template, { title, description, image: thumb, keywords, url: `https://phimtop1.com/film/${slug}` });
+      const canonicalUrl = isWatchPage
+         ? `https://phimtop1.com/xem-phim/${slug}${episodeSlug ? `/${episodeSlug}` : ''}`
+         : `https://phimtop1.com/film/${slug}`;
+
+      template = injectMeta(template, { title, description, image: thumb, keywords, url: canonicalUrl, canonical: canonicalUrl });
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
     } catch (e: any) {

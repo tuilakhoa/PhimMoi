@@ -5,6 +5,7 @@ import { Home } from './pages/Home';
 import { Category } from './pages/Category';
 import { Search } from './pages/Search';
 import { MovieDetailPage } from './pages/MovieDetail';
+import { WatchMoviePage } from './pages/WatchMoviePage';
 import { Discover } from './pages/Discover';
 import { Watchlist } from './pages/Watchlist';
 import { History } from './pages/History';
@@ -42,6 +43,8 @@ export default function App() {
             <Route path="nguoi-lon/cosplay" element={<CosplayPage />} />
             <Route path="nguoi-lon/cosplay/:id" element={<CosplayDetail />} />
             <Route path="film/:slug" element={<MovieDetailPage />} />
+            <Route path="xem-phim/:slug" element={<WatchMoviePage />} />
+            <Route path="xem-phim/:slug/:episodeSlug" element={<WatchMoviePage />} />
             <Route path="watch/:roomId" element={<WatchRoom />} />
             <Route path="api-docs" element={<APIDocs />} />
           </Route>

@@ -1,63 +1,26 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { nguoncApi } from '../services/api';
 import { topxxApi } from '../services/topxxService';
 import { vsphimApi, xxvnApi } from '../services/adultService';
-import { MovieDetail, EpisodeItem, Movie } from '../types';
-import { Loader2, Play, Calendar, Clock, Globe, Search, ArrowDownAZ, ArrowUpZA, Lightbulb, LightbulbOff } from 'lucide-react';
+import { MovieDetail, Movie } from '../types';
+import { Loader2, Play, Calendar, Clock, Globe, Search, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { SEO } from '../components/SEO';
-import { DeviceCast } from '../components/DeviceCast';
 import { ActorAvatar } from '../components/ActorAvatar';
 import { StarRating } from '../components/StarRating';
 import { MovieCard } from '../components/MovieCard';
 import { WatchlistButton } from '../components/WatchlistButton';
 import { Comments } from '../components/Comments';
 import { storage } from '../lib/storage';
-import { roomService } from '../services/roomService';
-import { auth, signInWithGoogle } from '../lib/firebase';
-import { Users } from 'lucide-react';
 
 export function MovieDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeEpisode, setActiveEpisode] = useState<EpisodeItem | null>(null);
-  const [creatingRoom, setCreatingRoom] = useState(false);
-
-  const handleCreateWatchParty = async () => {
-    if (!movie || !activeEpisode) return;
-
-    if (!auth.currentUser) {
-      if (confirm("Bạn cần đăng nhập để tạo phòng xem chung. Đăng nhập ngay?")) {
-        await signInWithGoogle().catch(console.error);
-      }
-      return;
-    }
-
-    setCreatingRoom(true);
-    try {
-      const roomName = `${auth.currentUser.displayName || "Bạn"}'s Party - ${movie.name}`;
-      const roomId = await roomService.createRoom(
-        roomName, 
-        movie.slug, 
-        movie.name, 
-        activeEpisode.slug, 
-        activeEpisode.name
-      );
-      navigate(`/watch/${roomId}`);
-    } catch (e) {
-      console.error("Failed to create room", e);
-      alert("Không thể tạo phòng xem chung. Vui lòng thử lại!");
-    } finally {
-      setCreatingRoom(false);
-    }
-  };
 
   const [episodeSearch, setEpisodeSearch] = useState('');
   const [isReversed, setIsReversed] = useState(false);
-  const [isFocusMode, setIsFocusMode] = useState(false);
   const [tmdbScore, setTmdbScore] = useState<number | null>(null);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [relatedMovies, setRelatedMovies] = useState<Movie[]>([]);
@@ -86,12 +49,10 @@ export function MovieDetailPage() {
           setMovie(res.movie);
           // Save to history
           storage.addToHistory(res.movie);
-          // Set first episode as default if available
-          if (res.movie.episodes && res.movie.episodes.length > 0 && res.movie.episodes[0].items.length > 0) {
-             setActiveEpisode(res.movie.episodes[0].items[0]);
-          }
-
-          // Fetch TMDB score (only for non-adult)
+        const found = res.movie.episodes[0].items[0];
+        // We aren't setting activeEpisode anymore on info page
+        // But we still save to history
+        // Fetch TMDB score (only for non-adult)
           if (!isAdult) {
             const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
             if (TMDB_API_KEY) {
@@ -215,92 +176,25 @@ export function MovieDetailPage() {
     };
   };
 
-  const generateTitle = (movie: MovieDetail, activeEpisode: EpisodeItem | null) => {
+  const generateTitle = (movie: MovieDetail) => {
     const isAdult = slug?.startsWith('av-') || slug?.startsWith('tx-') || slug?.startsWith('vs-') || slug?.startsWith('xx-');
     if (isAdult) {
-      if (activeEpisode) {
-        return `Xem phim ${movie.name} - ${activeEpisode.name} Vietsub JAV 18+`;
-      }
-      return `Xem phim ${movie.name} - Phim JAV 18+ Vietsub Cực Hay HD`;
+      return `Thông tin phim ${movie.name} - Phim JAV 18+ Vietsub Cực Hay HD`;
     }
-    
-    if (activeEpisode) {
-      return `Xem phim ${movie.name} (${movie.original_name}) - ${activeEpisode.name} Vietsub Thuyết minh`;
-    }
-    return `Xem phim ${movie.name} (${movie.original_name}) Vietsub Thuyết minh mới nhất`;
+    return `Thông tin phim ${movie.name} (${movie.original_name}) Vietsub Thuyết minh mới nhất | PhimTop1`;
   };
 
   return (
     <div className="relative space-y-8 animate-in fade-in duration-500">
-      {isFocusMode && (
-        <div 
-          className="fixed inset-0 z-[60] bg-black/95 transition-opacity" 
-          onClick={() => setIsFocusMode(false)}
-        />
-      )}
       <SEO 
-          title={generateTitle(movie, activeEpisode)}
-          description={movie.description ? movie.description.replace(/<[^>]+>/g, '').trim().substring(0, 160).replace(/\s+/g, ' ') + '...' : `Xem phim ${movie.name} (${movie.original_name}) vietsub thuyết minh chất lượng cao. Cập nhật mới nhất tại PhimTop1.`}
+          title={generateTitle(movie)}
+          description={movie.description ? movie.description.replace(/<[^>]+>/g, '').trim().substring(0, 160).replace(/\s+/g, ' ') + '...' : `Thông tin phim ${movie.name} (${movie.original_name}). Cập nhật mới nhất tại PhimTop1.`}
           image={movie.poster_url || movie.thumb_url}
           keywords={generateKeywords(movie)}
           type="video.movie"
           schema={getMovieSchema(movie)}
           canonical={`https://phimtop1.com/film/${slug}`}
         />
-        {/* Player Section */}
-        {activeEpisode && (
-          <div className={cn("space-y-4", isFocusMode && "relative z-[70]")}>
-            <div className="flex items-center justify-between">
-               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                 <span className="w-1.5 h-6 bg-rose-500 rounded-full inline-block"></span>
-                 Tập {activeEpisode.name}
-               </h2>
-               <div className="flex items-center gap-2">
-                 <button 
-                    onClick={handleCreateWatchParty}
-                    disabled={creatingRoom}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-rose-600 text-white hover:bg-rose-500 transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50"
-                 >
-                    {creatingRoom ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-                    <span>Xem chung</span>
-                 </button>
-                 <button 
-                    onClick={() => setIsFocusMode(!isFocusMode)}
-                    className={cn(
-                      "group flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
-                      isFocusMode 
-                        ? "bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 border border-rose-500/30" 
-                        : "bg-zinc-900/80 text-zinc-400 hover:bg-zinc-800 hover:text-rose-400 border border-zinc-800 hover:border-zinc-700 shadow-sm"
-                    )}
-                 >
-                    {isFocusMode ? (
-                      <>
-                        <Lightbulb className="w-4 h-4 text-rose-400 fill-rose-400/20" />
-                        <span>Tắt chế độ tập trung</span>
-                      </>
-                    ) : (
-                      <>
-                        <LightbulbOff className="w-4 h-4 group-hover:text-rose-400 transition-colors" />
-                        <span>Chế độ tập trung</span>
-                      </>
-                    )}
-                 </button>
-               </div>
-            </div>
-            
-            <div className={cn("w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-zinc-800 transition-all duration-300", isFocusMode ? "aspect-video max-h-[85vh]" : "aspect-video")}>
-              <iframe
-                src={activeEpisode.embed || undefined}
-                className="w-full h-full"
-                allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                referrerPolicy="no-referrer"
-                title="Movie Player"
-              ></iframe>
-            </div>
-            <DeviceCast currentEpisode={activeEpisode} movie={movie} />
-          </div>
-        )}
 
         {/* Info Section */}
       <div className="flex flex-col md:flex-row gap-8">
@@ -462,21 +356,13 @@ export function MovieDetailPage() {
                   <div className="max-h-72 overflow-y-auto pr-2 custom-scrollbar">
                     <div className="flex flex-wrap gap-2">
                       {filteredItems.map((ep) => (
-                        <button
+                        <Link
                           key={ep.slug}
-                          onClick={() => {
-                            setActiveEpisode(ep);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          className={cn(
-                            "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                            activeEpisode?.slug === ep.slug
-                              ? "bg-rose-500 text-white"
-                              : "bg-zinc-900 border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                          )}
+                          to={`/xem-phim/${slug}/${ep.slug}`}
+                          className="px-4 py-2 rounded-md text-sm font-medium bg-zinc-900 border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
                         >
                           {ep.name}
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   </div>
