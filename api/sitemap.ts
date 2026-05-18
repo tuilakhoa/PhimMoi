@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getStaticRoutes, getMovieSlugsTotalPages, getMovieSlugsForSitemap, generateSitemapXml, generateSitemapIndexXml } from '../src/services/sitemapService';
+import { getStaticRoutes, getMovieSlugsTotalPages, getMovieSlugsForSitemap, generateSitemapXml, generateSitemapIndexXml } from '../src/services/sitemapService.js';
 
 // We process fewer items per sitemap file to keep Serverless time well under 10 seconds.
 // 500 items = ~21 API pages = 1 batch. This will run in ~1-2 seconds!
