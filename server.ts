@@ -343,6 +343,74 @@ async function startServer() {
     // Do NOT app.use(vite.middlewares) yet, because we need to intercept index.html requests
   }
 
+  // --- Sitemap & Robots.txt ---
+  app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send(`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /api-mobile/
+Disallow: /watch/
+
+Sitemap: https://phimtop1.com/sitemap.xml`);
+  });
+
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const { getStaticRoutes, getAllMovieSlugs, generateSitemapIndexXml } = await import('./src/services/sitemapService.js');
+      
+      // For simplicity and speed in serverless, we'll return a sitemap index
+      // even if we only have one movie sitemap for now.
+      const sitemaps = [
+        'https://phimtop1.com/sitemap-static.xml',
+        'https://phimtop1.com/sitemap-movies-1.xml'
+      ];
+
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate');
+      res.send(generateSitemapIndexXml(sitemaps));
+    } catch (err) {
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  app.get('/sitemap-static.xml', async (req, res) => {
+    try {
+      const { getStaticRoutes, generateSitemapXml } = await import('./src/services/sitemapService.js');
+      const staticRoutes = getStaticRoutes();
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate');
+      res.send(generateSitemapXml(staticRoutes));
+    } catch (err) {
+      res.status(500).send('Error');
+    }
+  });
+
+  app.get('/sitemap-movies-:page.xml', async (req, res) => {
+    try {
+      const { getAllMovieSlugs, generateSitemapXml } = await import('./src/services/sitemapService.js');
+      const page = parseInt(req.params.page) || 1;
+      const slugs = await getAllMovieSlugs();
+      
+      const itemsPerPage = 20000;
+      const start = (page - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const paginatedSlugs = slugs.slice(start, end);
+
+      const now = new Date().toISOString();
+      const movieUrls = paginatedSlugs.flatMap(slug => [
+        { loc: `https://phimtop1.com/film/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' },
+        { loc: `https://phimtop1.com/xem-phim/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' }
+      ]);
+
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate');
+      res.send(generateSitemapXml(movieUrls));
+    } catch (err) {
+      res.status(500).send('Error');
+    }
+  });
+
   // --- Dynamic SEO Injection ---
 
   const CATEGORY_MAP: Record<string, string> = {
@@ -450,7 +518,7 @@ async function startServer() {
   };
 
   // Movie Details Route
-  app.get(['/film/:slug', '/xem-phim/:slug', '/xem-phim/:slug/:episodeSlug'], async (req, res, next) => {
+  app.get(['/film/:slug', '/phim/:slug', '/xem-phim/:slug', '/xem-phim/:slug/:episodeSlug'], async (req, res, next) => {
     try {
       const slug = req.params.slug;
       const episodeSlug = req.params.episodeSlug;

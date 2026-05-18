@@ -2,6 +2,22 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/robots.txt",
+      "destination": "/api/robots"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/sitemap-static.xml",
+      "destination": "/api/sitemap?type=static"
+    },
+    {
+      "source": "/sitemap-movies-:page.xml",
+      "destination": "/api/sitemap?type=movies&page=:page"
+    },
+    {
       "source": "/api/ophim-movies/(.*)",
       "destination": "/api/ophim-proxy?path=$1"
     },
