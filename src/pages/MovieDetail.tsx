@@ -223,7 +223,16 @@ export function MovieDetailPage() {
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-1">
               <h1 className="text-3xl font-bold text-white">{movie.name}</h1>
-              <WatchlistButton movie={movie} showText className="sm:self-start" />
+              <div className="flex flex-wrap items-center gap-3 sm:self-start">
+                <Link
+                  to={`/xem-phim/${slug}${movie.episodes?.[0]?.items?.[0]?.slug ? `/${movie.episodes[0].items[0].slug}` : ''}`}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-full transition-all shadow-lg shadow-rose-600/30 hover:shadow-rose-600/50 hover:-translate-y-0.5"
+                >
+                  <Play className="w-5 h-5 fill-current" />
+                  Xem Phim
+                </Link>
+                <WatchlistButton movie={movie} showText className="rounded-full px-6 py-2.5 font-bold" />
+              </div>
             </div>
             <p className="text-zinc-400 text-lg">{movie.original_name}</p>
           </div>
