@@ -78,8 +78,8 @@ export async function getMovieSlugsForSitemap(pageStr: string | string[], itemsP
     
     const slugs: string[] = [];
     
-    // Fetch in chunks of 20 to avoid overwhelming the external API and timing out
-    const chunkSize = 20;
+    // Fetch in chunks to avoid overwhelming the external API and timing out
+    const chunkSize = 100;
     for (let i = 0; i < pagesToFetch.length; i += chunkSize) {
       const chunk = pagesToFetch.slice(i, i + chunkSize);
       const results = await Promise.allSettled(

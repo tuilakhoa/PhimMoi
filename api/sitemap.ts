@@ -3,7 +3,7 @@ import { getStaticRoutes, getMovieSlugsTotalPages, getMovieSlugsForSitemap, gene
 
 // We process fewer items per sitemap file to keep Serverless time well under 10 seconds.
 // 500 items = ~21 API pages = 1 batch. This will run in ~1-2 seconds!
-const ITEMS_PER_SITEMAP = 500;
+const ITEMS_PER_SITEMAP = 10000;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { type, page } = req.query;
