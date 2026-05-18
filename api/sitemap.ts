@@ -27,8 +27,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const now = new Date().toISOString();
       // Each slug generates 2 URLs, so max 1000 URLs per sub-sitemap file, very optimal.
       const movieUrls = slugs.flatMap(slug => [
-        { loc: `https://phimtop1.com/film/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' },
-        { loc: `https://phimtop1.com/xem-phim/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' }
+        { loc: `https://phimtop1.asia/film/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' },
+        { loc: `https://phimtop1.asia/xem-phim/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' }
       ]);
 
       return res.send(generateSitemapXml(movieUrls));
@@ -38,13 +38,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const totalPages = await getMovieSlugsTotalPages(ITEMS_PER_SITEMAP);
     
     const sitemaps = [
-      'https://phimtop1.com/sitemap-static.xml'
+      'https://phimtop1.asia/sitemap-static.xml'
     ];
 
     // Don't generate too many (e.g. limit to 100 max for overall sanity, ~50,000 movies)
     const limitedPages = Math.min(totalPages, 100);
     for (let i = 1; i <= limitedPages; i++) {
-      sitemaps.push(`https://phimtop1.com/sitemap-movies-${i}.xml`);
+      sitemaps.push(`https://phimtop1.asia/sitemap-movies-${i}.xml`);
     }
 
     return res.send(generateSitemapIndexXml(sitemaps));

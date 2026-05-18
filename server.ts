@@ -352,7 +352,7 @@ Disallow: /api/
 Disallow: /api-mobile/
 Disallow: /watch/
 
-Sitemap: https://phimtop1.com/sitemap.xml`);
+Sitemap: https://phimtop1.asia/sitemap.xml`);
   });
 
   app.get('/sitemap.xml', async (req, res) => {
@@ -363,11 +363,11 @@ Sitemap: https://phimtop1.com/sitemap.xml`);
       const totalPages = await getMovieSlugsTotalPages(ITEMS_PER_SITEMAP);
       
       const sitemaps = [
-        'https://phimtop1.com/sitemap-static.xml'
+        'https://phimtop1.asia/sitemap-static.xml'
       ];
       const limitedPages = Math.min(totalPages, 100);
       for (let i = 1; i <= limitedPages; i++) {
-        sitemaps.push(`https://phimtop1.com/sitemap-movies-${i}.xml`);
+        sitemaps.push(`https://phimtop1.asia/sitemap-movies-${i}.xml`);
       }
 
       res.setHeader('Content-Type', 'application/xml');
@@ -400,8 +400,8 @@ Sitemap: https://phimtop1.com/sitemap.xml`);
 
       const now = new Date().toISOString();
       const movieUrls = slugs.flatMap(slug => [
-        { loc: `https://phimtop1.com/film/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' },
-        { loc: `https://phimtop1.com/xem-phim/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' }
+        { loc: `https://phimtop1.asia/film/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' },
+        { loc: `https://phimtop1.asia/xem-phim/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' }
       ]);
 
       res.setHeader('Content-Type', 'application/xml');
@@ -639,8 +639,8 @@ Sitemap: https://phimtop1.com/sitemap.xml`);
       }
 
       const canonicalUrl = isWatchPage
-         ? `https://phimtop1.com/xem-phim/${slug}${episodeSlug ? `/${episodeSlug}` : ''}`
-         : `https://phimtop1.com/film/${slug}`;
+         ? `https://phimtop1.asia/xem-phim/${slug}${episodeSlug ? `/${episodeSlug}` : ''}`
+         : `https://phimtop1.asia/film/${slug}`;
 
       template = injectMeta(template, { title, description, image: thumb, keywords, url: canonicalUrl, canonical: canonicalUrl });
 
@@ -664,7 +664,7 @@ Sitemap: https://phimtop1.com/sitemap.xml`);
         title: "PhimTop1 - Xem phim online, Phim 18+ & Cosplay Nude",
         description: "PhimTop1 - Nền tảng giải trí đa kênh: Xem phim online, phim người lớn 18+, JAV Vietsub và ảnh Cosplay Nude nghệ thuật. Chất lượng 4K, cập nhật mỗi ngày.",
         keywords: "phim moi, phim hay, phim 18+, jav vietsub, cosplay nude, xem phim online, phim cap 3, phimtop1",
-        url: `https://phimtop1.com${url}`
+        url: `https://phimtop1.asia${url}`
       };
 
       if (url === '/') {

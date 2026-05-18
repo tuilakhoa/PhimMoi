@@ -193,7 +193,7 @@ export function MovieDetailPage() {
           keywords={generateKeywords(movie)}
           type="video.movie"
           schema={getMovieSchema(movie)}
-          canonical={`https://phimtop1.com/film/${slug}`}
+          canonical={`https://phimtop1.asia/film/${slug}`}
         />
 
         {/* Info Section */}

@@ -171,7 +171,7 @@ export function WatchMoviePage() {
           keywords={generateKeywords(movie)}
           type="video.movie"
           schema={getMovieSchema(movie)}
-          canonical={`https://phimtop1.com/xem-phim/${slug}${activeEpisode ? `/${activeEpisode.slug}` : ''}`}
+          canonical={`https://phimtop1.asia/xem-phim/${slug}${activeEpisode ? `/${activeEpisode.slug}` : ''}`}
         />
 
       <div className="flex items-center justify-between gap-4 flex-wrap">

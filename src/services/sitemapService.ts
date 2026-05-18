@@ -1,4 +1,4 @@
-const SITE_URL = 'https://phimtop1.com';
+const SITE_URL = 'https://phimtop1.asia';
 
 const CATEGORY_MAP: Record<string, string> = {
   'phim-bo': 'Phim Bộ',

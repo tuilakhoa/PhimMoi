@@ -10,5 +10,5 @@ Disallow: /api/
 Disallow: /api-mobile/
 Disallow: /watch/
 
-Sitemap: https://phimtop1.com/sitemap.xml`);
+Sitemap: https://phimtop1.asia/sitemap.xml`);
 }

@@ -91,7 +91,7 @@ export function CosplayDetail() {
         image={album.images[0]}
         keywords={`${album.cosplayer}, ${album.character}, cosplay nude, ${album.cosplayer} nude, cosplay 18+, bộ ảnh cosplay đẹp, kho ảnh cosplay`}
         schema={getAlbumSchema(album)}
-        canonical={`https://phimtop1.com/nguoi-lon/cosplay/${id}`}
+        canonical={`https://phimtop1.asia/nguoi-lon/cosplay/${id}`}
       />
 
       <div>
