@@ -357,14 +357,18 @@ Sitemap: https://phimtop1.com/sitemap.xml`);
 
   app.get('/sitemap.xml', async (req, res) => {
     try {
-      const { getStaticRoutes, getAllMovieSlugs, generateSitemapIndexXml } = await import('./src/services/sitemapService.js');
+      const { getMovieSlugsTotalPages, generateSitemapIndexXml } = await import('./src/services/sitemapService.js');
       
-      // For simplicity and speed in serverless, we'll return a sitemap index
-      // even if we only have one movie sitemap for now.
+      const ITEMS_PER_SITEMAP = 500;
+      const totalPages = await getMovieSlugsTotalPages(ITEMS_PER_SITEMAP);
+      
       const sitemaps = [
-        'https://phimtop1.com/sitemap-static.xml',
-        'https://phimtop1.com/sitemap-movies-1.xml'
+        'https://phimtop1.com/sitemap-static.xml'
       ];
+      const limitedPages = Math.min(totalPages, 100);
+      for (let i = 1; i <= limitedPages; i++) {
+        sitemaps.push(`https://phimtop1.com/sitemap-movies-${i}.xml`);
+      }
 
       res.setHeader('Content-Type', 'application/xml');
       res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate');
@@ -388,17 +392,14 @@ Sitemap: https://phimtop1.com/sitemap.xml`);
 
   app.get('/sitemap-movies-:page.xml', async (req, res) => {
     try {
-      const { getAllMovieSlugs, generateSitemapXml } = await import('./src/services/sitemapService.js');
-      const page = parseInt(req.params.page) || 1;
-      const slugs = await getAllMovieSlugs();
+      const { getMovieSlugsForSitemap, generateSitemapXml } = await import('./src/services/sitemapService.js');
+      const page = req.params.page;
       
-      const itemsPerPage = 20000;
-      const start = (page - 1) * itemsPerPage;
-      const end = start + itemsPerPage;
-      const paginatedSlugs = slugs.slice(start, end);
+      const ITEMS_PER_SITEMAP = 500;
+      const slugs = await getMovieSlugsForSitemap(page, ITEMS_PER_SITEMAP);
 
       const now = new Date().toISOString();
-      const movieUrls = paginatedSlugs.flatMap(slug => [
+      const movieUrls = slugs.flatMap(slug => [
         { loc: `https://phimtop1.com/film/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' },
         { loc: `https://phimtop1.com/xem-phim/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' }
       ]);

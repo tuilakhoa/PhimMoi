@@ -1,5 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getStaticRoutes, getAllMovieSlugs, generateSitemapXml, generateSitemapIndexXml } from '../src/services/sitemapService';
+import { getStaticRoutes, getMovieSlugsTotalPages, getMovieSlugsForSitemap, generateSitemapXml, generateSitemapIndexXml } from '../src/services/sitemapService';
+
+// We process fewer items per sitemap file to keep Serverless time well under 10 seconds.
+// 500 items = ~21 API pages = 1 batch. This will run in ~1-2 seconds!
+const ITEMS_PER_SITEMAP = 500;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { type, page } = req.query;
@@ -14,20 +18,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (type === 'movies') {
-      const p = parseInt(page as string) || 1;
-      const slugs = await getAllMovieSlugs();
+      const slugs = await getMovieSlugsForSitemap(page, ITEMS_PER_SITEMAP);
       
-      const itemsPerPage = 10000; // Smaller chunks for serverless reliability
-      const start = (p - 1) * itemsPerPage;
-      const end = start + itemsPerPage;
-      const paginatedSlugs = slugs.slice(start, end);
-
-      if (paginatedSlugs.length === 0 && p > 1) {
-        return res.status(404).send('Page not found');
+      if (slugs.length === 0) {
+        return res.status(404).send('Not found');
       }
 
       const now = new Date().toISOString();
-      const movieUrls = paginatedSlugs.flatMap(slug => [
+      // Each slug generates 2 URLs, so max 1000 URLs per sub-sitemap file, very optimal.
+      const movieUrls = slugs.flatMap(slug => [
         { loc: `https://phimtop1.com/film/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' },
         { loc: `https://phimtop1.com/xem-phim/${slug}`, lastmod: now, changefreq: 'weekly', priority: '0.6' }
       ]);
@@ -36,15 +35,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Default: Sitemap Index
-    const slugs = await getAllMovieSlugs();
-    const itemsPerPage = 10000;
-    const totalPages = Math.max(1, Math.ceil(slugs.length / itemsPerPage));
+    const totalPages = await getMovieSlugsTotalPages(ITEMS_PER_SITEMAP);
     
     const sitemaps = [
       'https://phimtop1.com/sitemap-static.xml'
     ];
 
-    for (let i = 1; i <= totalPages; i++) {
+    // Don't generate too many (e.g. limit to 100 max for overall sanity, ~50,000 movies)
+    const limitedPages = Math.min(totalPages, 100);
+    for (let i = 1; i <= limitedPages; i++) {
       sitemaps.push(`https://phimtop1.com/sitemap-movies-${i}.xml`);
     }
 

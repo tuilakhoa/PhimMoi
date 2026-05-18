@@ -51,25 +51,42 @@ const COUNTRY_MAP: Record<string, string> = {
   'quoc-gia-khac': 'Quốc gia khác'
 };
 
-export async function getAllMovieSlugs() {
+export async function getMovieSlugsTotalPages(itemsPerSitemap: number) {
   try {
-    const res = await fetch('https://ophim1.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1');
+    const res = await fetch('https://ophim1.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1', {
+      // Small timeout for Vercel just in case
+      signal: AbortSignal.timeout(5000)
+    });
     const data: any = await res.json();
     const totalItems = data.data?.params?.pagination?.totalItems || 0;
-    const itemsPerPage = data.data?.params?.pagination?.totalItemsPerPage || 24;
-    const totalPages = Math.min(Math.ceil(totalItems / itemsPerPage), 1000); // Up to 1000 pages
+    return Math.max(1, Math.ceil(totalItems / itemsPerSitemap));
+  } catch (error) {
+    console.error('Error fetching total pages:', error);
+    return 1;
+  }
+}
+
+export async function getMovieSlugsForSitemap(pageStr: string | string[], itemsPerSitemap: number) {
+  try {
+    const page = parseInt(pageStr as string) || 1;
+    // OPhim has 24 items per page.
+    const ophimPagesPerSitemap = Math.ceil(itemsPerSitemap / 24);
+    const startOphimPage = (page - 1) * ophimPagesPerSitemap + 1;
+    
+    // We fetch `ophimPagesPerSitemap` pages for this specific sitemap file.
+    const pagesToFetch = Array.from({ length: ophimPagesPerSitemap }, (_, i) => startOphimPage + i);
+    
     const slugs: string[] = [];
     
-    // Fetch in batches to avoid overwhelming the server or causing timeouts
-    const batchSize = 50;
-    const maxPages = 400; // 400 pages * 24 items/page = 9,600 movies
-    const actualPages = Math.min(totalPages, maxPages);
-    
-    for (let i = 0; i < actualPages; i += batchSize) {
-      const batch = Array.from({ length: Math.min(batchSize, actualPages - i) }, (_, index) => i + index + 1);
+    // Fetch in chunks of 20 to avoid overwhelming the external API and timing out
+    const chunkSize = 20;
+    for (let i = 0; i < pagesToFetch.length; i += chunkSize) {
+      const chunk = pagesToFetch.slice(i, i + chunkSize);
       const results = await Promise.allSettled(
-        batch.map(page => 
-          fetch(`https://ophim1.com/v1/api/danh-sach/phim-moi-cap-nhat?page=${page}`)
+        chunk.map(p => 
+          fetch(`https://ophim1.com/v1/api/danh-sach/phim-moi-cap-nhat?page=${p}`, {
+             signal: AbortSignal.timeout(5000)
+          })
             .then(r => r.json())
             .then((d: any) => d.data?.items?.map((item: any) => item.slug) || [])
         )
@@ -80,14 +97,11 @@ export async function getAllMovieSlugs() {
           slugs.push(...result.value);
         }
       });
-      
-      // Early break if we're approaching timeout (approximate)
-      // Actually we just continue
     }
 
     return Array.from(new Set(slugs)).filter(Boolean);
   } catch (error) {
-    console.error('Error fetching movie slugs:', error);
+    console.error('Error fetching movie slugs for sitemap:', error);
     return [];
   }
 }
