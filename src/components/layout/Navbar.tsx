@@ -3,8 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Menu, X, MonitorPlay, Heart, History, Sparkles, Film, Tv, PlayCircle, Flame, Lock, User, Camera, LogOut, Clapperboard } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAge } from '../../contexts/AgeContext';
-import { auth, signInWithGoogle } from '../../lib/firebase';
-import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ALL_LINKS = [
   { name: 'Phim Mới', slug: '/', icon: PlayCircle },
@@ -48,14 +47,9 @@ export function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { ageStatus } = useAge();
+  const { user, signIn, signOut } = useAuth();
 
-   const VISIBLE_LINKS = ageStatus === 'under18' ? ALL_LINKS.filter(l => !l.isAdult) : ALL_LINKS;
-   const [user, setUser] = useState<FirebaseUser | null>(null);
-
-   useEffect(() => {
-     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
-     return () => unsubscribe();
-   }, []);
+  const VISIBLE_LINKS = ageStatus === 'under18' ? ALL_LINKS.filter(l => !l.isAdult) : ALL_LINKS;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -267,7 +261,7 @@ export function Navbar() {
                       </div>
                       <div className="p-2 border-t border-zinc-800">
                         <button
-                          onClick={() => signOut(auth)}
+                          onClick={() => signOut()}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-rose-500 hover:bg-rose-500/10 transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
@@ -278,7 +272,7 @@ export function Navbar() {
                   </div>
                 ) : (
                   <button
-                    onClick={signInWithGoogle}
+                    onClick={() => signIn()}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border",
                       isAdultPage ? "bg-rose-600 border-rose-500 text-white" : "bg-indigo-600 border-indigo-500 text-white"

@@ -29,6 +29,24 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "userName", "text", "timestamp"]
+    },
+    "Comment": {
+      "title": "Movie Comment",
+      "description": "A comment/review for a movie",
+      "type": "object",
+      "properties": {
+        "movieSlug": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "content": { "type": "string" },
+        "rating": { "type": "number" },
+        "timestamp": { "type": "number" },
+        "likes": { "type": "number" },
+        "dislikes": { "type": "number" },
+        "voters": { "type": "object" }
+      },
+      "required": ["movieSlug", "userId", "userName", "content", "rating", "timestamp"]
     }
   },
   "firestore": {
@@ -39,6 +57,10 @@
     "rooms/{roomId}/chat": {
       "schema": "Chat",
       "description": "Sub-collection for messages in a room"
+    },
+    "comments": {
+      "schema": "Comment",
+      "description": "Collection for movie reviews and comments"
     }
   }
 }
