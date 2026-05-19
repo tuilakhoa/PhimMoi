@@ -1,26 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { updateProfile } from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
 import { User as UserIcon, Mail, Camera, Loader2, Save } from 'lucide-react';
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState('');
   const [photoURL, setPhotoURL] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        setDisplayName(user.displayName || '');
-        setPhotoURL(user.photoURL || '');
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) {
+        setUser(u);
+        setDisplayName(u.displayName || '');
+        setPhotoURL(u.photoURL || '');
       } else {
         navigate('/');
       }
-    }
-  }, [user, loading, navigate]);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -18,42 +18,39 @@ import { WatchRoom } from './pages/WatchRoom';
 import { ProfilePage } from './pages/ProfilePage';
 import APIDocs from './pages/APIDocs';
 import { AgeProvider } from './contexts/AgeContext';
-import { AuthProvider } from './contexts/AuthContext';
 import { AgeGate } from './components/AgeGate';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AgeProvider>
-        <HelmetProvider>
-          <BrowserRouter>
-            <AgeGate />
-            <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="danh-sach/:slug" element={<Category />} />
-              <Route path="the-loai/:slug" element={<Category />} />
-              <Route path="quoc-gia/:slug" element={<Category />} />
-              <Route path="nam-phat-hanh/:year" element={<Category />} />
-              <Route path="tim-kiem" element={<Search />} />
-              <Route path="ho-so" element={<ProfilePage />} />
-              <Route path="kham-pha" element={<Discover />} />
-              <Route path="yeu-thich" element={<Watchlist />} />
-              <Route path="lich-su" element={<History />} />
-              <Route path="nguoi-lon" element={<AdultPage />} />
-              <Route path="dien-vien-18" element={<ActorsPage />} />
-              <Route path="nguoi-lon/cosplay" element={<CosplayPage />} />
-              <Route path="nguoi-lon/cosplay/:id" element={<CosplayDetail />} />
-              <Route path="film/:slug" element={<MovieDetailPage />} />
-              <Route path="xem-phim/:slug" element={<WatchMoviePage />} />
-              <Route path="xem-phim/:slug/:episodeSlug" element={<WatchMoviePage />} />
-              <Route path="watch/:roomId" element={<WatchRoom />} />
-              <Route path="api-docs" element={<APIDocs />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </HelmetProvider>
-      </AgeProvider>
-    </AuthProvider>
+    <AgeProvider>
+      <HelmetProvider>
+        <BrowserRouter>
+          <AgeGate />
+          <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="danh-sach/:slug" element={<Category />} />
+            <Route path="the-loai/:slug" element={<Category />} />
+            <Route path="quoc-gia/:slug" element={<Category />} />
+            <Route path="nam-phat-hanh/:year" element={<Category />} />
+            <Route path="tim-kiem" element={<Search />} />
+            <Route path="ho-so" element={<ProfilePage />} />
+            <Route path="kham-pha" element={<Discover />} />
+            <Route path="yeu-thich" element={<Watchlist />} />
+            <Route path="lich-su" element={<History />} />
+            <Route path="nguoi-lon" element={<AdultPage />} />
+            <Route path="dien-vien-18" element={<ActorsPage />} />
+            <Route path="nguoi-lon/cosplay" element={<CosplayPage />} />
+            <Route path="nguoi-lon/cosplay/:id" element={<CosplayDetail />} />
+            <Route path="film/:slug" element={<MovieDetailPage />} />
+            <Route path="xem-phim/:slug" element={<WatchMoviePage />} />
+            <Route path="xem-phim/:slug/:episodeSlug" element={<WatchMoviePage />} />
+            <Route path="watch/:roomId" element={<WatchRoom />} />
+            <Route path="api-docs" element={<APIDocs />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </HelmetProvider>
+    </AgeProvider>
   );
 }
