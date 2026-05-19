@@ -39,6 +39,7 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
   const [newComment, setNewComment] = useState('');
   const [rating, setRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'helpful'>('newest');
 
   useEffect(() => {
@@ -53,6 +54,10 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
         ...doc.data()
       })) as Comment[];
       setComments(docs);
+      setError(null);
+    }, (err) => {
+      console.error("Firestore Subscribe Error:", err);
+      setError("Không thể tải bình luận. Vui lòng kiểm tra lại kết nối.");
     });
 
     return unsubscribe;
@@ -112,6 +117,7 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
     if (!user || !newComment.trim()) return;
 
     setIsSubmitting(true);
+    setError(null);
     try {
       await addDoc(collection(db, 'comments'), {
         movieSlug,
@@ -127,8 +133,13 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
       });
       setNewComment('');
       setRating(5);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'comments');
+    } catch (err: any) {
+      console.error("Error adding comment:", err);
+      setError("Không thể gửi bình luận. Bạn đã đăng nhập chưa?");
+      // Chuyển tiếp lỗi chi tiết để hệ thống chẩn đoán
+      try {
+        handleFirestoreError(err, OperationType.CREATE, 'comments');
+      } catch (e) {}
     } finally {
       setIsSubmitting(false);
     }
@@ -243,6 +254,13 @@ export const Comments: React.FC<CommentsProps> = ({ movieSlug }) => {
             )}
           </button>
         </form>
+      )}
+
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+          <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+          {error}
+        </div>
       )}
 
       <div className="space-y-6">

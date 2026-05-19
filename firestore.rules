@@ -65,28 +65,35 @@ service cloud.firestore {
     }
 
     // Comment Validation
-    function isValidComment(data) {
+    function isCommentSchemaValid(data) {
       return data.movieSlug is string && data.movieSlug.size() > 0 &&
-             data.userId == request.auth.uid &&
+             data.userId is string &&
              data.userName is string && data.userName.size() > 0 &&
              data.content is string && data.content.size() > 0 && data.content.size() <= 2000 &&
              data.rating is number && data.rating >= 1 && data.rating <= 5 &&
-             data.timestamp is number;
+             data.timestamp is number &&
+             data.likes is number &&
+             data.dislikes is number &&
+             data.voters is map;
+    }
+
+    function isAuthor(data) {
+      return data.userId == request.auth.uid;
     }
 
     match /comments/{commentId} {
       allow read: if true;
-      allow create: if isSignedIn() && isValidComment(incoming());
+      allow create: if isSignedIn() && isCommentSchemaValid(incoming()) && isAuthor(incoming());
       allow update: if isSignedIn() && (
-        // Author can update their own comment
-        (existing().userId == request.auth.uid && isValidComment(incoming()) && 
-         incoming().diff(existing()).affectedKeys().hasOnly(['content', 'rating', 'timestamp'])) ||
-        // Others can only update likes/dislikes/voters
+        // Author can update their own comment content
+        (isAuthor(existing()) && isCommentSchemaValid(incoming()) && isAuthor(incoming()) &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['content', 'rating', 'timestamp', 'userName', 'userAvatar'])) ||
+        // Anyone can update likes/dislikes/voters for voting
         (incoming().userId == existing().userId &&
          incoming().movieSlug == existing().movieSlug &&
-         incoming().diff(existing()).affectedKeys().hasAny(['likes', 'dislikes', 'voters']))
+         incoming().diff(existing()).affectedKeys().hasOnly(['likes', 'dislikes', 'voters']))
       );
-      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow delete: if isSignedIn() && isAuthor(existing());
     }
   }
 }
